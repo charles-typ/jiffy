@@ -6,7 +6,9 @@
 
 namespace mmux {
 namespace storage {
+
 /* Chain server class */
+
 class chain_server {
  public:
 
