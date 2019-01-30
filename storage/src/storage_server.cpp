@@ -1,29 +1,30 @@
 #include <atomic>
 #include <iostream>
-#include <mmux/directory/block/block_advertisement_client.h>
-#include <mmux/storage/kv/kv_block.h>
-#include <mmux/storage/manager/storage_management_server.h>
-#include <mmux/storage/notification/notification_server.h>
-#include <mmux/storage/service/block_server.h>
-#include <mmux/utils/signal_handling.h>
-#include <mmux/utils/logger.h>
-#include <mmux/storage/service/chain_server.h>
-#include <mmux/storage/service/server_storage_tracker.h>
+#include <jiffy/directory/block/block_registration_client.h>
+#include <jiffy/storage/hashtable/hash_table_partition.h>
+#include <jiffy/storage/manager/storage_management_server.h>
+#include <jiffy/storage/notification/notification_server.h>
+#include <jiffy/storage/service/block_server.h>
+#include <jiffy/utils/signal_handling.h>
+#include <jiffy/utils/logger.h>
+#include <jiffy/storage/service/chain_server.h>
+#include <jiffy/storage/service/server_storage_tracker.h>
 #include <boost/program_options.hpp>
 #include <ifaddrs.h>
+#include <jiffy/storage/block.h>
 
-using namespace ::mmux::directory;
-using namespace ::mmux::storage;
-using namespace ::mmux::utils;
+using namespace ::jiffy::directory;
+using namespace ::jiffy::storage;
+using namespace ::jiffy::utils;
 
 using namespace ::apache::thrift;
 
 std::string mapper(const std::string &env_var) {
-  if (env_var == "MMUX_DIRECTORY_HOST") return "directory.host";
-  else if (env_var == "MMUX_DIRECTORY_SERVICE_PORT") return "directory.service_port";
-  else if (env_var == "MMUX_BLOCK_PORT") return "directory.block_port";
-  else if (env_var == "MMUX_STORAGE_HOST") return "storage.host";
-  else if (env_var == "MMUX_STORAGE_SERVICE_PORT") return "storage.service_port";
+  if (env_var == "JIFFY_DIRECTORY_HOST") return "directory.host";
+  else if (env_var == "JIFFY_DIRECTORY_SERVICE_PORT") return "directory.service_port";
+  else if (env_var == "JIFFY_BLOCK_PORT") return "directory.block_port";
+  else if (env_var == "JIFFY_STORAGE_HOST") return "storage.host";
+  else if (env_var == "JIFFY_STORAGE_SERVICE_PORT") return "storage.service_port";
   return "";
 }
 
@@ -60,8 +61,8 @@ void retract_block_names_and_print_stacktrace(int sig_num) {
   std::string trace = signal_handling::stacktrace();
   LOG(log_level::info) << "Caught signal " << sig_num << ", cleaning up...";
   try {
-    block_advertisement_client client(dir_host, block_port);
-    client.retract_blocks(block_names);
+    block_registration_client client(dir_host, block_port);
+    client.deregister_blocks(block_names);
     client.disconnect();
   } catch (std::exception &e) {
     LOG(log_level::error) << "Failed to retract blocks: " << e.what()
@@ -155,14 +156,14 @@ int main(int argc, char **argv) {
     }
 
     if (vm.count("version")) {
-      std::cout << "Storage service daemon, Version 0.1.0" << std::endl; // TODO: Configure version string
+      std::cout << "Jiffy storage service daemon, Version 0.1.0" << std::endl; // TODO: Configure version string
       return 0;
     }
 
     // Configuration files have higher priority than env vars
     std::vector<std::string> config_files;
     if (config_file == "") {
-      config_files = {"conf/mmux.conf", "/etc/mmux/mmux.conf", "/usr/conf/mmux.conf", "/usr/local/conf/mmux.conf"};
+      config_files = {"conf/jiffy.conf", "/etc/jiffy/jiffy.conf", "/usr/conf/jiffy.conf", "/usr/local/conf/jiffy.conf"};
     } else {
       config_files = {config_file};
     }
@@ -216,7 +217,7 @@ int main(int argc, char **argv) {
   LOG(log_level::info) << "Hostname: " << hostname;
 
   for (int i = 0; i < static_cast<int>(num_blocks); i++) {
-    block_names.push_back(block_name_parser::make(hostname,
+    block_names.push_back(block_id_parser::make(hostname,
                                                   service_port,
                                                   mgmt_port,
                                                   notf_port,
@@ -224,15 +225,10 @@ int main(int argc, char **argv) {
                                                   i));
   }
 
-  std::vector<std::shared_ptr<chain_module>> blocks;
+  std::vector<std::shared_ptr<block>> blocks;
   blocks.resize(num_blocks);
   for (size_t i = 0; i < blocks.size(); ++i) {
-    blocks[i] = std::make_shared<kv_block>(block_names[i],
-                                           block_capacity,
-                                           blk_thresh_lo,
-                                           blk_thresh_hi,
-                                           dir_host,
-                                           dir_port);
+    blocks[i] = std::make_shared<block>(block_names[i], block_capacity);
   }
   LOG(log_level::info) << "Created " << blocks.size() << " blocks";
 
@@ -251,8 +247,8 @@ int main(int argc, char **argv) {
   LOG(log_level::info) << "Management server listening on " << address << ":" << mgmt_port;
 
   try {
-    block_advertisement_client client(dir_host, block_port);
-    client.advertise_blocks(block_names);
+    block_registration_client client(dir_host, block_port);
+    client.register_blocks(block_names);
     client.disconnect();
   } catch (std::exception &e) {
     LOG(log_level::error) << "Failed to advertise blocks: " << e.what()
@@ -263,10 +259,10 @@ int main(int argc, char **argv) {
   LOG(log_level::info) << "Advertised " << num_blocks << " to block allocation server";
 
   std::exception_ptr kv_exception = nullptr;
-  auto kv_server = block_server::create(blocks, address, service_port, non_blocking, io_threads, work_threads);
-  std::thread kv_serve_thread([&kv_exception, &kv_server, &failing_thread, &failure_condition] {
+  auto storage_server = block_server::create(blocks, address, service_port, non_blocking, io_threads, work_threads);
+  std::thread storage_serve_thread([&kv_exception, &storage_server, &failing_thread, &failure_condition] {
     try {
-      kv_server->serve();
+      storage_server->serve();
     } catch (...) {
       kv_exception = std::current_exception();
       failing_thread = 1;
@@ -367,8 +363,8 @@ int main(int argc, char **argv) {
   }
 
   try {
-    block_advertisement_client client(dir_host, block_port);
-    client.retract_blocks(block_names);
+    block_registration_client client(dir_host, block_port);
+    client.deregister_blocks(block_names);
     client.disconnect();
   } catch (std::exception &e) {
     LOG(log_level::error) << "Failed to retract blocks: " << e.what()
