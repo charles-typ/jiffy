@@ -151,6 +151,12 @@ void auto_scaling_service_handler::auto_scaling(const std::vector<std::string> &
 
 
   } else if (scaling_type == "hash_table_merge") {
+    // TODO we should not use the metadata field since it is not thread safe, instead add a new field which is atomic
+    // TODO modify the finding method to the directory server side
+    // FIXME Pass in the replica chain vector and find the name for the chain
+    // FIXME See if the metadata is regular, if it is regular, change it to exporting, which means that it will need to find a block to merge. If it is exporting? Not possible because the same block could only be merged once. If it is importing?
+    // FIXME Be sure to check if this block is already 0_65536 then there is no need to merge
+    // FIXME Search through the block and select one to merge, Change the metadata to importing
     auto start = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     //LOG(log_level::info) << "Start hash table merge auto_scaling: " << start;
     double threshold_hi_ = std::stod(conf.find("threshold_hi_")->second);
@@ -169,6 +175,7 @@ void auto_scaling_service_handler::auto_scaling(const std::vector<std::string> &
       src_after_args.push_back(name);
       src_after_args.emplace_back("regular$" + name);
       src->run_command(storage::hash_table_cmd_id::ht_update_partition, src_after_args);
+      mtx.unlock();
       return;
     }
     std::vector<std::string> ret = src->run_command(storage::hash_table_cmd_id::ht_get_storage_size, {});

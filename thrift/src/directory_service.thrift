@@ -117,6 +117,7 @@ service directory_service {
   bool is_directory(1: string path)
     throws (1: directory_service_exception ex),
 
+//TODO fix, this is a typo
   rpc_replica_chain reslove_failures(1: string path, 2: rpc_replica_chain chain) // TODO: We should pass in chain id...
     throws (1: directory_service_exception ex),
 
@@ -134,4 +135,6 @@ service directory_service {
 
   i64 get_storage_capacity(1: string path, 2: string partition_name)
     throws (1: directory_service_exception ex),
+
+
 }
