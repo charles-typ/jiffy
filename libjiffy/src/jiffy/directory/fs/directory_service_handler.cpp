@@ -273,11 +273,22 @@ int64_t directory_service_handler::get_storage_capacity(const std::string &path,
   }
 }
 
+void directory_service_handler::get_merge_target(std::vector<std::string> & _return, const std::vector<std::string> & chain, const std::string &path) {
+  try {
+    _return = shard_->get_merge_target(chain, path);
+    return;
+  } catch(directory_ops_exception &e) {
+    throw make_exception(e);
+  }
+}
+
+
 directory_service_exception directory_service_handler::make_exception(directory_ops_exception &ex) const {
   directory_service_exception e;
   e.msg = ex.what();
   return e;
 }
+
 
 }
 }

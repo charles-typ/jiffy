@@ -457,5 +457,21 @@ directory_service_get_storage_capacity_result::~directory_service_get_storage_ca
 directory_service_get_storage_capacity_presult::~directory_service_get_storage_capacity_presult() throw() {
 }
 
+
+directory_service_get_merge_target_args::~directory_service_get_merge_target_args() throw() {
+}
+
+
+directory_service_get_merge_target_pargs::~directory_service_get_merge_target_pargs() throw() {
+}
+
+
+directory_service_get_merge_target_result::~directory_service_get_merge_target_result() throw() {
+}
+
+
+directory_service_get_merge_target_presult::~directory_service_get_merge_target_presult() throw() {
+}
+
 }} // namespace
 

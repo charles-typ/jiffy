@@ -625,10 +625,70 @@ int64_t directory_tree::get_capacity(const std::string &path, const std::string 
   auto replica_set = get_node_as_file(path)->dstatus().data_blocks();
   for (auto &replica :replica_set) {
     if (replica.name == partition_name)
-      return storage_->storage_capacity(replica.block_ids.front());
+      return static_cast<int64_t>(storage_->storage_capacity(replica.block_ids.front()));
   }
   throw directory_ops_exception("Cannot find partition: " + partition_name + " under file: " + path);
 }
+
+std::vector<std::string> directory_tree::get_merge_target(const std::vector<std::string> & chain, const std::string &path) {
+  std::vector<std::string> ret;
+  auto replica_set = get_node_as_file(path)->dstatus().data_blocks();
+  std::string name;
+  directory::replica_chain current_chain;
+  directory::replica_chain merge_target;
+  std::string merge_target_name;
+  for (auto &replica :replica_set) {
+    if (replica.block_ids == chain) {
+      name = replica.name;
+      current_chain = replica;
+      break;
+    }
+  }
+  if(current_chain.metadata == "exporting")
+    throw directory_ops_exception("Partition should not be merged twice");
+  if(name.empty())
+    throw directory_ops_exception("Partition not found under file:" + path);
+  get_node_as_file(path)->update_data_status_partition(name, name, "exporting");
+  auto storage_size = storage_->storage_size(current_chain.block_ids.front());
+  auto storage_capacity = storage_->storage_capacity(current_chain.block_ids.front());
+  std::vector<std::string> slot_range = string_utils::split(name, '_', 2);
+  std::int32_t merge_range_begin = std::stoi(slot_range[0]);
+  std::int32_t merge_range_end = std::stoi(slot_range[1]);
+  if(merge_range_begin == 0 && merge_range_end == 65536) {
+    ret.push_back(name);
+    return ret;
+  }
+
+  //TODO fix when splitting and merging happen in the same time, then the replica_set is not thread safe
+  bool able_to_merge = false;
+  size_t find_min_size = static_cast<size_t>(static_cast<double>(storage_capacity)) + 1;
+  for (auto &i : replica_set) {
+    if ((i.fetch_slot_range().first == merge_range_end || i.fetch_slot_range().second == merge_range_begin) && i.metadata == "regular") {
+      auto size = storage_->storage_size(i.block_ids.front());
+      auto metadata_status = i.metadata;
+      // TODO add threshold_hi_
+      if (size + storage_size < static_cast<size_t>(static_cast<double>(storage_capacity))
+          && size < find_min_size) {
+        merge_target = i;
+        merge_target_name = i.name;
+        find_min_size = size;
+        able_to_merge = true;
+      }
+    }
+  }
+  if (!able_to_merge) {
+    ret.emplace_back(name);
+    ret.emplace_back("unable_to_merge");
+    return ret;
+  }
+  get_node_as_file(path)->update_data_status_partition(merge_target_name, merge_target_name, "importing");
+  ret = merge_target.block_ids;
+  ret.emplace_back(merge_target_name);
+  ret.emplace_back(name);
+  return ret;
+}
+
+
 
 }
 }

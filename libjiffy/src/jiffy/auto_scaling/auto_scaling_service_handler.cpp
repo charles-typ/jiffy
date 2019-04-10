@@ -151,16 +151,20 @@ void auto_scaling_service_handler::auto_scaling(const std::vector<std::string> &
 
 
   } else if (scaling_type == "hash_table_merge") {
-    // TODO we should not use the metadata field since it is not thread safe, instead add a new field which is atomic
+    // TODO remember that we only have one directory server, so that some concurrency issue could be fixed
     // TODO modify the finding method to the directory server side
     // FIXME Pass in the replica chain vector and find the name for the chain
-    // FIXME See if the metadata is regular, if it is regular, change it to exporting, which means that it will need to find a block to merge. If it is exporting? Not possible because the same block could only be merged once. If it is importing?
+    // FIXME See if the metadata is regular, if it is regular, change it to exporting, which means that it will need to find a block to merge.
+    // FIXME If it is exporting? Not possible because the same block could only be merged once. If it is importing? We should just ignore this merge since the storage is increasing anyway
+    // FIXME Get the current replica chain's name + slot range(embeded in name) + storage_size + storage_capacity
     // FIXME Be sure to check if this block is already 0_65536 then there is no need to merge
-    // FIXME Search through the block and select one to merge, Change the metadata to importing
+    // FIXME Search through the block and select one to merge, Change the metadata to importing.
+    // FIXME Return the block in vector
     auto start = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     //LOG(log_level::info) << "Start hash table merge auto_scaling: " << start;
     double threshold_hi_ = std::stod(conf.find("threshold_hi_")->second);
     std::string name;
+    /*
     auto replica_set = fs->dstatus(path).data_blocks();
     for(auto &i: replica_set) {
       if(i.block_ids == current_replica_chain)
@@ -178,6 +182,8 @@ void auto_scaling_service_handler::auto_scaling(const std::vector<std::string> &
       mtx.unlock();
       return;
     }
+    //TODO what if the storage get's a rapid update and exceed the storage capacity??
+    // TODO this is not thread safe.
     std::vector<std::string> ret = src->run_command(storage::hash_table_cmd_id::ht_get_storage_size, {});
     auto storage_size = static_cast<std::size_t>(std::stoi(ret.front()));
     auto storage_capacity = static_cast<std::size_t>(std::stoi(ret.back()));
@@ -214,22 +220,53 @@ void auto_scaling_service_handler::auto_scaling(const std::vector<std::string> &
     if (able_to_merge) {
       throw std::logic_error("Adjacent partitions are not found or full");
     }
+     */
+    auto src = std::make_shared<storage::replica_chain_client>(fs, path, current_replica_chain, storage::KV_OPS);
+    auto merge_target = fs->get_merge_target(current_replica_chain, path);
+    name = merge_target.back();
+    merge_target.pop_back();
+    if(name == "unable_to_merge") {
+      std::vector<std::string> src_after_args;
+      name = merge_target.back();
+      src_after_args.push_back(name);
+      src_after_args.emplace_back("regular$" + name);
+      src->run_command(storage::hash_table_cmd_id::ht_update_partition, src_after_args);
+      mtx.unlock();
+      return;
+    }
+    if(name == "0_65536") {
+      std::vector<std::string> src_after_args;
+      // We don't need to update the src partition cause it will be deleted anyway
+      src_after_args.push_back(name);
+      src_after_args.emplace_back("regular$" + name);
+      src->run_command(storage::hash_table_cmd_id::ht_update_partition, src_after_args);
+      mtx.unlock();
+      return;
+    }
+    auto merge_target_name = merge_target.back();
+    merge_target.pop_back();
+    std::vector<std::string> target_slot_range = string_utils::split(merge_target_name, '_', 2);
+    std::int32_t target_range_begin = std::stoi(target_slot_range[0]);
+    std::int32_t target_range_end = std::stoi(target_slot_range[1]);
     auto finish_finding_chain_to_merge = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     //LOG(log_level::info) << "Found replica chain to merge: " << finish_finding_chain_to_merge;
 
+    std::vector<std::string> slot_range = string_utils::split(name, '_', 2);
+    std::int32_t merge_range_begin = std::stoi(slot_range[0]);
+    std::int32_t merge_range_end = std::stoi(slot_range[1]);
     // Connect two replica chains
    // auto src = std::make_shared<storage::replica_chain_client>(fs, path, current_replica_chain, storage::KV_OPS);
     auto dst = std::make_shared<storage::replica_chain_client>(fs, path, merge_target, storage::KV_OPS);
     std::string dst_partition_name;
-    if (merge_target.fetch_slot_range().first == merge_range_end)
+    if (target_range_begin == merge_range_end)
       dst_partition_name =
-          std::to_string(merge_range_begin) + "_" + std::to_string(merge_target.fetch_slot_range().second);
+          std::to_string(merge_range_begin) + "_" + std::to_string(target_range_end);
     else
       dst_partition_name =
-          std::to_string(merge_target.fetch_slot_range().first) + "_" + std::to_string(merge_range_end);
+          std::to_string(target_range_begin) + "_" + std::to_string(merge_range_end);
 
     std::string export_target_str_ = "";
-    for (const auto &block: merge_target.block_ids) {
+    for (const auto &block: merge_target) {
       export_target_str_ += (block + "!");
     }
     export_target_str_.pop_back();
@@ -237,7 +274,7 @@ void auto_scaling_service_handler::auto_scaling(const std::vector<std::string> &
     std::vector<std::string> dst_before_args;
     src_before_args.push_back(name);
     src_before_args.emplace_back("exporting$" + dst_partition_name + "$" + export_target_str_);
-    dst_before_args.push_back(merge_target.name);
+    dst_before_args.push_back(merge_target_name);
     dst_before_args.emplace_back("importing$" + name);
     src->run_command(storage::hash_table_cmd_id::ht_update_partition, src_before_args);
     dst->run_command(storage::hash_table_cmd_id::ht_update_partition, dst_before_args);
@@ -292,7 +329,7 @@ void auto_scaling_service_handler::auto_scaling(const std::vector<std::string> &
     // Update directory mapping
     auto finish_data_transmission = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     //LOG(log_level::info) << "Finish data transmission for hash table merge: " << finish_data_transmission;
-    fs->update_partition(path, merge_target.name, dst_partition_name, "regular");
+    fs->update_partition(path, merge_target_name, dst_partition_name, "regular");
     auto finish_update_partition_dir = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     //LOG(log_level::info) << "Finish updating mapping on directory server after hash table merge: " << finish_update_partition_dir;
     //LOG(log_level::info) << "Look here 5";

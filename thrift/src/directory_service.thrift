@@ -136,5 +136,6 @@ service directory_service {
   i64 get_storage_capacity(1: string path, 2: string partition_name)
     throws (1: directory_service_exception ex),
 
-
+  list<string> get_merge_target(1: list<string> chain, 2: string path)
+    throws (1: directory_service_exception ex),
 }

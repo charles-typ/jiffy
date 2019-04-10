@@ -1023,6 +1023,7 @@ class directory_management_ops {
                                 const std::string &new_partition_name,
                                 const std::string &partition_metadata) = 0;
   virtual int64_t get_capacity(const std::string &path, const std::string &partition_name) = 0;
+  virtual std::vector<std::string> get_merge_target(const std::vector<std::string> & chain, const std::string &path) = 0;
 };
 
 class directory_interface : public directory_ops, public directory_management_ops {};

@@ -279,6 +279,14 @@ class directory_service_handler : public directory_serviceIf {
    */
   int64_t get_storage_capacity(const std::string &path, const std::string &partition_name) override;
 
+  /**
+   * @brief Fetch merge target
+   * @param _return Merge target chain and name
+   * @param chain Chain to be merged
+   * @param path Path
+   */
+  void get_merge_target(std::vector<std::string> & _return, const std::vector<std::string> & chain, const std::string &path) override;
+
  private:
   /**
    * @brief Make exceptions

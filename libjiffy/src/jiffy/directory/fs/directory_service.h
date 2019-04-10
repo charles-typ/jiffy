@@ -49,6 +49,7 @@ class directory_serviceIf {
   virtual void remove_data_block(const std::string& path, const std::string& partition_name) = 0;
   virtual void request_partition_data_update(const std::string& path, const std::string& old_partition_name, const std::string& new_partition_name, const std::string& partition_metadata) = 0;
   virtual int64_t get_storage_capacity(const std::string& path, const std::string& partition_name) = 0;
+  virtual void get_merge_target(std::vector<std::string> & _return, const std::vector<std::string> & chain, const std::string& path) = 0;
 };
 
 class directory_serviceIfFactory {
@@ -167,6 +168,9 @@ class directory_serviceNull : virtual public directory_serviceIf {
   int64_t get_storage_capacity(const std::string& /* path */, const std::string& /* partition_name */) {
     int64_t _return = 0;
     return _return;
+  }
+  void get_merge_target(std::vector<std::string> & /* _return */, const std::vector<std::string> & /* chain */, const std::string& /* path */) {
+    return;
   }
 };
 
@@ -3616,6 +3620,131 @@ class directory_service_get_storage_capacity_presult {
 
 };
 
+typedef struct _directory_service_get_merge_target_args__isset {
+  _directory_service_get_merge_target_args__isset() : chain(false), path(false) {}
+  bool chain :1;
+  bool path :1;
+} _directory_service_get_merge_target_args__isset;
+
+class directory_service_get_merge_target_args {
+ public:
+
+  directory_service_get_merge_target_args(const directory_service_get_merge_target_args&);
+  directory_service_get_merge_target_args& operator=(const directory_service_get_merge_target_args&);
+  directory_service_get_merge_target_args() : path() {
+  }
+
+  virtual ~directory_service_get_merge_target_args() throw();
+  std::vector<std::string>  chain;
+  std::string path;
+
+  _directory_service_get_merge_target_args__isset __isset;
+
+  void __set_chain(const std::vector<std::string> & val);
+
+  void __set_path(const std::string& val);
+
+  bool operator == (const directory_service_get_merge_target_args & rhs) const
+  {
+    if (!(chain == rhs.chain))
+      return false;
+    if (!(path == rhs.path))
+      return false;
+    return true;
+  }
+  bool operator != (const directory_service_get_merge_target_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const directory_service_get_merge_target_args & ) const;
+
+  template <class Protocol_>
+  uint32_t read(Protocol_* iprot);
+  template <class Protocol_>
+  uint32_t write(Protocol_* oprot) const;
+
+};
+
+
+class directory_service_get_merge_target_pargs {
+ public:
+
+
+  virtual ~directory_service_get_merge_target_pargs() throw();
+  const std::vector<std::string> * chain;
+  const std::string* path;
+
+  template <class Protocol_>
+  uint32_t write(Protocol_* oprot) const;
+
+};
+
+typedef struct _directory_service_get_merge_target_result__isset {
+  _directory_service_get_merge_target_result__isset() : success(false), ex(false) {}
+  bool success :1;
+  bool ex :1;
+} _directory_service_get_merge_target_result__isset;
+
+class directory_service_get_merge_target_result {
+ public:
+
+  directory_service_get_merge_target_result(const directory_service_get_merge_target_result&);
+  directory_service_get_merge_target_result& operator=(const directory_service_get_merge_target_result&);
+  directory_service_get_merge_target_result() {
+  }
+
+  virtual ~directory_service_get_merge_target_result() throw();
+  std::vector<std::string>  success;
+  directory_service_exception ex;
+
+  _directory_service_get_merge_target_result__isset __isset;
+
+  void __set_success(const std::vector<std::string> & val);
+
+  void __set_ex(const directory_service_exception& val);
+
+  bool operator == (const directory_service_get_merge_target_result & rhs) const
+  {
+    if (!(success == rhs.success))
+      return false;
+    if (!(ex == rhs.ex))
+      return false;
+    return true;
+  }
+  bool operator != (const directory_service_get_merge_target_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const directory_service_get_merge_target_result & ) const;
+
+  template <class Protocol_>
+  uint32_t read(Protocol_* iprot);
+  template <class Protocol_>
+  uint32_t write(Protocol_* oprot) const;
+
+};
+
+typedef struct _directory_service_get_merge_target_presult__isset {
+  _directory_service_get_merge_target_presult__isset() : success(false), ex(false) {}
+  bool success :1;
+  bool ex :1;
+} _directory_service_get_merge_target_presult__isset;
+
+class directory_service_get_merge_target_presult {
+ public:
+
+
+  virtual ~directory_service_get_merge_target_presult() throw();
+  std::vector<std::string> * success;
+  directory_service_exception ex;
+
+  _directory_service_get_merge_target_presult__isset __isset;
+
+  template <class Protocol_>
+  uint32_t read(Protocol_* iprot);
+
+};
+
 template <class Protocol_>
 class directory_serviceClientT : virtual public directory_serviceIf {
  public:
@@ -3726,6 +3855,9 @@ class directory_serviceClientT : virtual public directory_serviceIf {
   int64_t get_storage_capacity(const std::string& path, const std::string& partition_name);
   void send_get_storage_capacity(const std::string& path, const std::string& partition_name);
   int64_t recv_get_storage_capacity();
+  void get_merge_target(std::vector<std::string> & _return, const std::vector<std::string> & chain, const std::string& path);
+  void send_get_merge_target(const std::vector<std::string> & chain, const std::string& path);
+  void recv_get_merge_target(std::vector<std::string> & _return);
  protected:
   apache::thrift::stdcxx::shared_ptr< Protocol_> piprot_;
   apache::thrift::stdcxx::shared_ptr< Protocol_> poprot_;
@@ -3810,6 +3942,8 @@ class directory_serviceProcessorT : public ::apache::thrift::TDispatchProcessorT
   void process_request_partition_data_update(int32_t seqid, Protocol_* iprot, Protocol_* oprot, void* callContext);
   void process_get_storage_capacity(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_get_storage_capacity(int32_t seqid, Protocol_* iprot, Protocol_* oprot, void* callContext);
+  void process_get_merge_target(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
+  void process_get_merge_target(int32_t seqid, Protocol_* iprot, Protocol_* oprot, void* callContext);
  public:
   directory_serviceProcessorT(::apache::thrift::stdcxx::shared_ptr<directory_serviceIf> iface) :
     iface_(iface) {
@@ -3897,6 +4031,9 @@ class directory_serviceProcessorT : public ::apache::thrift::TDispatchProcessorT
     processMap_["get_storage_capacity"] = ProcessFunctions(
       &directory_serviceProcessorT::process_get_storage_capacity,
       &directory_serviceProcessorT::process_get_storage_capacity);
+    processMap_["get_merge_target"] = ProcessFunctions(
+      &directory_serviceProcessorT::process_get_merge_target,
+      &directory_serviceProcessorT::process_get_merge_target);
   }
 
   virtual ~directory_serviceProcessorT() {}
@@ -4192,6 +4329,16 @@ class directory_serviceMultiface : virtual public directory_serviceIf {
     return ifaces_[i]->get_storage_capacity(path, partition_name);
   }
 
+  void get_merge_target(std::vector<std::string> & _return, const std::vector<std::string> & chain, const std::string& path) {
+    size_t sz = ifaces_.size();
+    size_t i = 0;
+    for (; i < (sz - 1); ++i) {
+      ifaces_[i]->get_merge_target(_return, chain, path);
+    }
+    ifaces_[i]->get_merge_target(_return, chain, path);
+    return;
+  }
+
 };
 
 // The 'concurrent' client is a thread safe client that correctly handles
@@ -4307,6 +4454,9 @@ class directory_serviceConcurrentClientT : virtual public directory_serviceIf {
   int64_t get_storage_capacity(const std::string& path, const std::string& partition_name);
   int32_t send_get_storage_capacity(const std::string& path, const std::string& partition_name);
   int64_t recv_get_storage_capacity(const int32_t seqid);
+  void get_merge_target(std::vector<std::string> & _return, const std::vector<std::string> & chain, const std::string& path);
+  int32_t send_get_merge_target(const std::vector<std::string> & chain, const std::string& path);
+  void recv_get_merge_target(std::vector<std::string> & _return, const int32_t seqid);
  protected:
   apache::thrift::stdcxx::shared_ptr< Protocol_> piprot_;
   apache::thrift::stdcxx::shared_ptr< Protocol_> poprot_;

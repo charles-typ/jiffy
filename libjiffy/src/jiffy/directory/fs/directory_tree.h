@@ -335,6 +335,13 @@ class directory_tree : public directory_interface {
    */
   int64_t get_capacity(const std::string &path, const std::string &partition_name) override;
 
+  /**
+   * @brief Fetch merge target
+   * @param chain Chain to be merged
+   * @return Merge target chain and name
+   */
+  std::vector<std::string> get_merge_target(const std::vector<std::string> & chain, const std::string &path) override;
+
  private:
   /**
    * @brief Remove file given parent node and child name

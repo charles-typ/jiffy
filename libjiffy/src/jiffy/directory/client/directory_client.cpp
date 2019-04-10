@@ -212,5 +212,11 @@ int64_t directory_client::get_capacity(const std::string &path, const std::strin
   return client_->get_storage_capacity(path, partition_name);
 }
 
+std::vector<std::string> directory_client::get_merge_target(const std::vector<std::string> & chain, const std::string &path) {
+  std::vector<std::string> ret;
+  client_->get_merge_target(ret, chain, path);
+  return ret;
+}
+
 }
 }

@@ -317,6 +317,14 @@ class directory_client : public directory_interface {
    */
   int64_t get_capacity(const std::string &path, const std::string &partition_name) override;
 
+  /**
+   * @brief Fetch merge target for auto_scaling merging
+   * @param _return Return value, chain blocks and chain name
+   * @param chain Current chain to be merged
+   * @param path Path
+   */
+  std::vector<std::string> get_merge_target(const std::vector<std::string> & chain, const std::string &path) override;
+
  private:
   /* Socket */
   std::shared_ptr<apache::thrift::transport::TSocket> socket_{};

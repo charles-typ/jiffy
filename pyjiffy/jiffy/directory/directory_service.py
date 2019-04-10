@@ -276,6 +276,15 @@ class Iface(object):
         """
         pass
 
+    def get_merge_target(self, chain, path):
+        """
+        Parameters:
+         - chain
+         - path
+
+        """
+        pass
+
 
 class Client(Iface):
     def __init__(self, iprot, oprot=None):
@@ -1280,6 +1289,42 @@ class Client(Iface):
             raise result.ex
         raise TApplicationException(TApplicationException.MISSING_RESULT, "get_storage_capacity failed: unknown result")
 
+    def get_merge_target(self, chain, path):
+        """
+        Parameters:
+         - chain
+         - path
+
+        """
+        self.send_get_merge_target(chain, path)
+        return self.recv_get_merge_target()
+
+    def send_get_merge_target(self, chain, path):
+        self._oprot.writeMessageBegin('get_merge_target', TMessageType.CALL, self._seqid)
+        args = get_merge_target_args()
+        args.chain = chain
+        args.path = path
+        args.write(self._oprot)
+        self._oprot.writeMessageEnd()
+        self._oprot.trans.flush()
+
+    def recv_get_merge_target(self):
+        iprot = self._iprot
+        (fname, mtype, rseqid) = iprot.readMessageBegin()
+        if mtype == TMessageType.EXCEPTION:
+            x = TApplicationException()
+            x.read(iprot)
+            iprot.readMessageEnd()
+            raise x
+        result = get_merge_target_result()
+        result.read(iprot)
+        iprot.readMessageEnd()
+        if result.success is not None:
+            return result.success
+        if result.ex is not None:
+            raise result.ex
+        raise TApplicationException(TApplicationException.MISSING_RESULT, "get_merge_target failed: unknown result")
+
 
 class Processor(Iface, TProcessor):
     def __init__(self, handler):
@@ -1313,6 +1358,7 @@ class Processor(Iface, TProcessor):
         self._processMap["remove_data_block"] = Processor.process_remove_data_block
         self._processMap["request_partition_data_update"] = Processor.process_request_partition_data_update
         self._processMap["get_storage_capacity"] = Processor.process_get_storage_capacity
+        self._processMap["get_merge_target"] = Processor.process_get_merge_target
 
     def process(self, iprot, oprot):
         (name, type, seqid) = iprot.readMessageBegin()
@@ -2053,6 +2099,32 @@ class Processor(Iface, TProcessor):
             msg_type = TMessageType.EXCEPTION
             result = TApplicationException(TApplicationException.INTERNAL_ERROR, 'Internal error')
         oprot.writeMessageBegin("get_storage_capacity", msg_type, seqid)
+        result.write(oprot)
+        oprot.writeMessageEnd()
+        oprot.trans.flush()
+
+    def process_get_merge_target(self, seqid, iprot, oprot):
+        args = get_merge_target_args()
+        args.read(iprot)
+        iprot.readMessageEnd()
+        result = get_merge_target_result()
+        try:
+            result.success = self._handler.get_merge_target(args.chain, args.path)
+            msg_type = TMessageType.REPLY
+        except TTransport.TTransportException:
+            raise
+        except directory_service_exception as ex:
+            msg_type = TMessageType.REPLY
+            result.ex = ex
+        except TApplicationException as ex:
+            logging.exception('TApplication exception in handler')
+            msg_type = TMessageType.EXCEPTION
+            result = ex
+        except Exception:
+            logging.exception('Unexpected exception in handler')
+            msg_type = TMessageType.EXCEPTION
+            result = TApplicationException(TApplicationException.INTERNAL_ERROR, 'Internal error')
+        oprot.writeMessageBegin("get_merge_target", msg_type, seqid)
         result.write(oprot)
         oprot.writeMessageEnd()
         oprot.trans.flush()
@@ -6896,6 +6968,194 @@ class get_storage_capacity_result(object):
 all_structs.append(get_storage_capacity_result)
 get_storage_capacity_result.thrift_spec = (
     (0, TType.I64, 'success', None, None, ),  # 0
+    (1, TType.STRUCT, 'ex', [directory_service_exception, None], None, ),  # 1
+)
+
+
+class get_merge_target_args(object):
+    """
+    Attributes:
+     - chain
+     - path
+
+    """
+
+    __slots__ = (
+        'chain',
+        'path',
+    )
+
+
+    def __init__(self, chain=None, path=None,):
+        self.chain = chain
+        self.path = path
+
+    def read(self, iprot):
+        if iprot._fast_decode is not None and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None:
+            iprot._fast_decode(self, iprot, [self.__class__, self.thrift_spec])
+            return
+        iprot.readStructBegin()
+        while True:
+            (fname, ftype, fid) = iprot.readFieldBegin()
+            if ftype == TType.STOP:
+                break
+            if fid == 1:
+                if ftype == TType.LIST:
+                    self.chain = []
+                    (_etype95, _size92) = iprot.readListBegin()
+                    for _i96 in range(_size92):
+                        _elem97 = iprot.readString()
+                        self.chain.append(_elem97)
+                    iprot.readListEnd()
+                else:
+                    iprot.skip(ftype)
+            elif fid == 2:
+                if ftype == TType.STRING:
+                    self.path = iprot.readString()
+                else:
+                    iprot.skip(ftype)
+            else:
+                iprot.skip(ftype)
+            iprot.readFieldEnd()
+        iprot.readStructEnd()
+
+    def write(self, oprot):
+        if oprot._fast_encode is not None and self.thrift_spec is not None:
+            oprot.trans.write(oprot._fast_encode(self, [self.__class__, self.thrift_spec]))
+            return
+        oprot.writeStructBegin('get_merge_target_args')
+        if self.chain is not None:
+            oprot.writeFieldBegin('chain', TType.LIST, 1)
+            oprot.writeListBegin(TType.STRING, len(self.chain))
+            for iter98 in self.chain:
+                oprot.writeString(iter98)
+            oprot.writeListEnd()
+            oprot.writeFieldEnd()
+        if self.path is not None:
+            oprot.writeFieldBegin('path', TType.STRING, 2)
+            oprot.writeString(self.path)
+            oprot.writeFieldEnd()
+        oprot.writeFieldStop()
+        oprot.writeStructEnd()
+
+    def validate(self):
+        return
+
+    def __repr__(self):
+        L = ['%s=%r' % (key, getattr(self, key))
+             for key in self.__slots__]
+        return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+    def __eq__(self, other):
+        if not isinstance(other, self.__class__):
+            return False
+        for attr in self.__slots__:
+            my_val = getattr(self, attr)
+            other_val = getattr(other, attr)
+            if my_val != other_val:
+                return False
+        return True
+
+    def __ne__(self, other):
+        return not (self == other)
+all_structs.append(get_merge_target_args)
+get_merge_target_args.thrift_spec = (
+    None,  # 0
+    (1, TType.LIST, 'chain', (TType.STRING, None, False), None, ),  # 1
+    (2, TType.STRING, 'path', None, None, ),  # 2
+)
+
+
+class get_merge_target_result(object):
+    """
+    Attributes:
+     - success
+     - ex
+
+    """
+
+    __slots__ = (
+        'success',
+        'ex',
+    )
+
+
+    def __init__(self, success=None, ex=None,):
+        self.success = success
+        self.ex = ex
+
+    def read(self, iprot):
+        if iprot._fast_decode is not None and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None:
+            iprot._fast_decode(self, iprot, [self.__class__, self.thrift_spec])
+            return
+        iprot.readStructBegin()
+        while True:
+            (fname, ftype, fid) = iprot.readFieldBegin()
+            if ftype == TType.STOP:
+                break
+            if fid == 0:
+                if ftype == TType.LIST:
+                    self.success = []
+                    (_etype102, _size99) = iprot.readListBegin()
+                    for _i103 in range(_size99):
+                        _elem104 = iprot.readString()
+                        self.success.append(_elem104)
+                    iprot.readListEnd()
+                else:
+                    iprot.skip(ftype)
+            elif fid == 1:
+                if ftype == TType.STRUCT:
+                    self.ex = directory_service_exception()
+                    self.ex.read(iprot)
+                else:
+                    iprot.skip(ftype)
+            else:
+                iprot.skip(ftype)
+            iprot.readFieldEnd()
+        iprot.readStructEnd()
+
+    def write(self, oprot):
+        if oprot._fast_encode is not None and self.thrift_spec is not None:
+            oprot.trans.write(oprot._fast_encode(self, [self.__class__, self.thrift_spec]))
+            return
+        oprot.writeStructBegin('get_merge_target_result')
+        if self.success is not None:
+            oprot.writeFieldBegin('success', TType.LIST, 0)
+            oprot.writeListBegin(TType.STRING, len(self.success))
+            for iter105 in self.success:
+                oprot.writeString(iter105)
+            oprot.writeListEnd()
+            oprot.writeFieldEnd()
+        if self.ex is not None:
+            oprot.writeFieldBegin('ex', TType.STRUCT, 1)
+            self.ex.write(oprot)
+            oprot.writeFieldEnd()
+        oprot.writeFieldStop()
+        oprot.writeStructEnd()
+
+    def validate(self):
+        return
+
+    def __repr__(self):
+        L = ['%s=%r' % (key, getattr(self, key))
+             for key in self.__slots__]
+        return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+    def __eq__(self, other):
+        if not isinstance(other, self.__class__):
+            return False
+        for attr in self.__slots__:
+            my_val = getattr(self, attr)
+            other_val = getattr(other, attr)
+            if my_val != other_val:
+                return False
+        return True
+
+    def __ne__(self, other):
+        return not (self == other)
+all_structs.append(get_merge_target_result)
+get_merge_target_result.thrift_spec = (
+    (0, TType.LIST, 'success', (TType.STRING, None, False), None, ),  # 0
     (1, TType.STRUCT, 'ex', [directory_service_exception, None], None, ),  # 1
 )
 fix_spec(all_structs)
