@@ -41,8 +41,7 @@ hash_table_partition::hash_table_partition(block_memory_manager *manager,
   } else {
     throw std::invalid_argument("No such serializer/deserializer " + ser);
   }
-  //threshold_hi_ = conf.get_as<double>("hashtable.capacity_threshold_hi", 0.95);
-  threshold_hi_ = 0.7;
+  threshold_hi_ = conf.get_as<double>("hashtable.capacity_threshold_hi", 0.95);
   threshold_lo_ = conf.get_as<double>("hashtable.capacity_threshold_lo", 0.05);
   auto_scale_ = conf.get_as<bool>("hashtable.auto_scale", true);
   auto r = utils::string_utils::split(name_, '_');
@@ -229,6 +228,7 @@ void hash_table_partition::get_data_in_slot_range(std::vector<std::string> &data
 std::string hash_table_partition::update_partition(const std::string &new_name, const std::string &new_metadata) {
   //LOG(log_level::info) << "Updating partition of " << name() << " to be " << new_name << new_metadata;
   //std::shared_lock<std::shared_mutex> lock(metadata_mtx_);
+  update_lock.lock();
   if(new_name == "merging" && new_metadata == "merging") {
     if(metadata() == "regular" && name() != "0_65536") {
       metadata("exporting");
@@ -245,8 +245,10 @@ std::string hash_table_partition::update_partition(const std::string &new_name, 
     auto range = utils::string_utils::split(s[1], '_');
     export_slot_range(std::stoi(range[0]), std::stoi(range[1]));
   } else if (status == "importing") {
-    if(metadata() != "regular")
+    if(metadata() != "regular") {
+      update_lock.unlock();
       return "!fail";
+    }
     auto range = utils::string_utils::split(s[1], '_');
     import_slot_range(std::stoi(range[0]), std::stoi(range[1]));
   } else {
@@ -274,6 +276,7 @@ std::string hash_table_partition::update_partition(const std::string &new_name, 
   metadata(status);
   slot_range(new_name);
   //LOG(log_level::info) << "Partition updated";
+  update_lock.unlock();
   return "!ok";
 }
 
