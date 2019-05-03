@@ -1,7 +1,8 @@
 include_directories(${THRIFT_INCLUDE_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/src
         ${CMAKE_CURRENT_SOURCE_DIR}/../thirdparty/libcuckoo
-        ${CMAKE_CURRENT_SOURCE_DIR}/../thirdparty/btree)
+        ${CMAKE_CURRENT_SOURCE_DIR}/../thirdparty/btree
+        ${CMAKE_CURRENT_SOURCE_DIR}/../thirdparty/monolog)
 
 if (BUILD_STORAGE OR BUILD_DIRECTORY)
   add_library(jiffy OBJECT
