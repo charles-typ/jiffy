@@ -9,10 +9,7 @@ data_structure_client::data_structure_client(std::shared_ptr<directory::director
                                              std::vector<command> OPS,
                                              int timeout_ms)
     : fs_(std::move(fs)), path_(path), status_(status), timeout_ms_(timeout_ms) {
-  blocks_.clear();
-  for (const auto &block: status.data_blocks()) {
-    blocks_.push_back(std::make_shared<replica_chain_client>(fs_, path_, block, OPS, timeout_ms_));
-  }
+  (void)OPS;
 }
 
 directory::data_status &data_structure_client::status() {

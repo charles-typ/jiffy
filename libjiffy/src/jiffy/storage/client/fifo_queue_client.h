@@ -97,6 +97,8 @@ class fifo_queue_client : data_structure_client {
   std::size_t dequeue_partition_;
   /* Enqueue partition id */
   std::size_t enqueue_partition_;
+  /* Replica chain clients, each partition only save a replica chain client */
+  std::vector<std::shared_ptr<replica_chain_client>> blocks_;
 };
 
 }

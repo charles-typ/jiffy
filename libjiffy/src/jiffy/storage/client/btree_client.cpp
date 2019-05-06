@@ -16,6 +16,7 @@ btree_client::btree_client(std::shared_ptr<directory::directory_interface> fs,
   slots_.clear();
   for (const auto &block: status.data_blocks()) {
     slots_.push_back(utils::string_utils::split(block.name, '_')[0]);
+    blocks_.push_back(std::make_shared<replica_chain_client>(fs_, path_, block, BTREE_OPS, timeout_ms_));
   }
 }
 

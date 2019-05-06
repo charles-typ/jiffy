@@ -67,7 +67,8 @@ void auto_scaling_service_handler::auto_scaling(const std::vector<std::string> &
     std::string dst_partition_name = std::to_string(split_range_begin) + "_" + std::to_string(split_range_end);
     std::string src_partition_name = std::to_string(slot_range_begin) + "_" + std::to_string(split_range_begin);
     //LOG(log_level::info) << "Look here 2";
-    auto dst_replica_chain = fs->add_block(path, dst_partition_name, "regular");
+    // Making it split importing since we don't want the client to refresh and add this block
+    auto dst_replica_chain = fs->add_block(path, dst_partition_name, "split_importing");
     //LOG(log_level::info) << "Block successfully added";
     auto finish_adding_replica_chain =
         std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
@@ -157,6 +158,7 @@ void auto_scaling_service_handler::auto_scaling(const std::vector<std::string> &
     // Finalize slot range split
     std::string old_name = current_name;
     fs->update_partition(path, old_name, src_partition_name, "regular");
+    fs->update_partition(path, dst_partition_name, dst_partition_name, "regular");
     auto finish_updating_partition_dir =
         std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 

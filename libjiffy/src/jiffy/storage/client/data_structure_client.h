@@ -74,8 +74,7 @@ class data_structure_client {
   std::string path_;
   /* Data status */
   directory::data_status status_;
-  /* Replica chain clients, each partition only save a replica chain client */
-  std::vector<std::shared_ptr<replica_chain_client>> blocks_;
+
   /* Time out*/
   int timeout_ms_;
 };

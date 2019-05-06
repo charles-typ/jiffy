@@ -10,25 +10,26 @@ namespace storage {
 
 using namespace jiffy::utils;
 
-
 hash_table_client::hash_table_client(std::shared_ptr<directory::directory_interface> fs,
                                      const std::string &path,
                                      const directory::data_status &status,
                                      int timeout_ms)
     : data_structure_client(fs, path, status, KV_OPS, timeout_ms) {
-  slots_.clear();
-  for (const auto &block: status.data_blocks()) {
-    slots_.push_back(std::stoull(utils::string_utils::split(block.name, '_')[0]));
+  blocks_.clear();
+  for (auto &block: status.data_blocks()) {
+    blocks_.emplace(std::make_pair(static_cast<int32_t>(std::stoi(utils::string_utils::split(block.name, '_')[0])),
+                                   std::make_shared<replica_chain_client>(fs_, path_, block, KV_OPS, timeout_ms_)));
   }
 }
 
 void hash_table_client::refresh() {
   status_ = fs_->dstatus(path_);
-  slots_.clear();
   blocks_.clear();
-  for (const auto &block: status_.data_blocks()) {
-    slots_.push_back(std::stoull(utils::string_utils::split(block.name, '_')[0]));
-    blocks_.push_back(std::make_shared<replica_chain_client>(fs_, path_, block, KV_OPS, timeout_ms_));
+  for (auto &block: status_.data_blocks()) {
+    if (block.metadata != "split_importing" && block.metadata != "importing") {
+      blocks_.emplace(std::make_pair(static_cast<int32_t>(std::stoi(utils::string_utils::split(block.name, '_')[0])),
+                                     std::make_shared<replica_chain_client>(fs_, path_, block, KV_OPS, timeout_ms_)));
+    }
   }
 }
 
@@ -168,30 +169,18 @@ std::vector<std::string> hash_table_client::remove(const std::vector<std::string
 }
 
 std::size_t hash_table_client::num_keys() {
-  for (size_t i = 0; i < blocks_.size(); i++) {
-    blocks_[i]->send_command(hash_table_cmd_id::ht_num_keys, {});
+  for (auto &block : blocks_) {
+    block.second->send_command(hash_table_cmd_id::ht_num_keys, {});
   }
   size_t n = 0;
-  for (size_t i = 0; i < blocks_.size(); i++) {
-    n += std::stoll(blocks_[i]->recv_response().front());
+  for (auto &block : blocks_) {
+    n += std::stoll(block.second->recv_response().front());
   }
   return n;
 }
 
-size_t hash_table_client::block_id(const std::string &key) {
-  auto hash = hash_slot::get(key);
-  int max_value = -1;
-  size_t idx;
-
-  // TODO fix this
-  for(auto x = slots_.begin(); x != slots_.end(); x++) {
-    if(*x <= hash && *x > max_value) {
-      max_value = *x;
-      idx = static_cast<size_t>(x - slots_.begin());
-    }
-  }
-  return idx;
- // return static_cast<size_t>(std::upper_bound(slots_.begin(), slots_.end(), hash_slot::get(key)) - slots_.begin() - 1);
+std::size_t hash_table_client::block_id(const std::string &key) {
+  return static_cast<size_t>((*std::prev(blocks_.upper_bound(hash_slot::get(key)))).first);
 }
 
 std::vector<std::string> hash_table_client::batch_command(const hash_table_cmd_id &op,
@@ -201,27 +190,33 @@ std::vector<std::string> hash_table_client::batch_command(const hash_table_cmd_i
   if (args.size() % args_per_op != 0)
     throw std::invalid_argument("Incorrect number of arguments");
 
-  std::vector<std::vector<std::string>> block_args(blocks_.size());
-  std::vector<std::vector<size_t>> positions(blocks_.size());
+  std::map<int32_t, std::vector<std::string>> block_args;
+  std::map<int32_t, std::vector<size_t>> positions;
   size_t num_ops = args.size() / args_per_op;
   for (size_t i = 0; i < num_ops; i++) {
     auto id = block_id(args[i * args_per_op]);
+    if (block_args.find(id) == block_args.end()) {
+      block_args.emplace(std::make_pair(id, std::vector<std::string>{}));
+    }
+    if (positions.find(id) == positions.end()) {
+      block_args.emplace(std::make_pair(id, std::vector<std::string>{}));
+    }
     for (size_t j = 0; j < args_per_op; j++)
       block_args[id].push_back(args[i * args_per_op + j]);
     positions[id].push_back(i);
   }
 
-  for (size_t i = 0; i < blocks_.size(); i++) {
-    if (!block_args[i].empty())
-      blocks_[i]->send_command(op, block_args[i]);
+  for (auto &block: blocks_) {
+    if (!block_args[block.first].empty())
+      block.second->send_command(op, block_args[block.first]);
   }
 
   std::vector<std::string> results(num_ops);
-  for (size_t i = 0; i < blocks_.size(); i++) {
-    if (!block_args[i].empty()) {
-      auto res = blocks_[i]->recv_response();
+  for (auto &block: blocks_) {
+    if (!block_args[block.first].empty()) {
+      auto res = block.second->recv_response();
       for (size_t j = 0; j < res.size(); j++) {
-        results[positions[i][j]] = res[j];
+        results[positions[block.first][j]] = res[j];
       }
     }
   }
@@ -248,9 +243,9 @@ void hash_table_client::handle_redirect(int32_t cmd_id, const std::vector<std::s
     refresh();
     throw redo_error();
   }
-  if(response == "!full") {
+  if (response == "!full") {
     //LOG(log_level::info) << "putting the client to sleep to let auto_scaling run first for 2^" << redo_times << " milliseconds";
-    std::this_thread::sleep_for(std::chrono::milliseconds((int)(std::pow(2, redo_times))));
+    std::this_thread::sleep_for(std::chrono::milliseconds((int) (std::pow(2, redo_times))));
     redo_times++;
     throw redo_error();
   }
@@ -280,8 +275,8 @@ void hash_table_client::handle_redirects(int32_t cmd_id,
       refresh();
       throw redo_error();
     }
-    if(response == "!full") {
-      std::this_thread::sleep_for(std::chrono::milliseconds((int)(std::pow(2, redo_times))));
+    if (response == "!full") {
+      std::this_thread::sleep_for(std::chrono::milliseconds((int) (std::pow(2, redo_times))));
       throw redo_error();
     }
   }

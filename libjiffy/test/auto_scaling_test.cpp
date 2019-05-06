@@ -42,7 +42,7 @@ using namespace ::apache::thrift::transport;
 #define STORAGE_MANAGEMENT_PORT 9092
 #define AUTO_SCALING_SERVICE_PORT 9095
 
-/*
+
 TEST_CASE("hash_table_auto_scale_up_test", "[directory_service][storage_server][management_server]") {
   auto alloc = std::make_shared<sequential_block_allocator>();
   auto block_names = test_utils::init_block_names(100, STORAGE_SERVICE_PORT, STORAGE_MANAGEMENT_PORT);
@@ -83,6 +83,7 @@ TEST_CASE("hash_table_auto_scale_up_test", "[directory_service][storage_server][
     REQUIRE(client.get(key) == key);
   }
 
+
   as_server->stop();
   if(auto_scaling_thread.joinable()) {
     auto_scaling_thread.join();
@@ -104,9 +105,9 @@ TEST_CASE("hash_table_auto_scale_up_test", "[directory_service][storage_server][
     dir_serve_thread.join();
   }
 }
-*/
 
-/*
+
+
 TEST_CASE("hash_table_auto_scale_down_test", "[directory_service][storage_server][management_server]") {
   auto alloc = std::make_shared<sequential_block_allocator>();
   auto block_names = test_utils::init_block_names(3, STORAGE_SERVICE_PORT, STORAGE_MANAGEMENT_PORT);
@@ -148,11 +149,19 @@ TEST_CASE("hash_table_auto_scale_down_test", "[directory_service][storage_server
   REQUIRE_NOTHROW(client.remove(std::to_string(1000)));
 
   // Busy wait until number of blocks decreases
-  while (t->dstatus("/sandbox/scale_down.txt").data_blocks().size() == 3 || t->dstatus("/sandbox/scale_down.txt").data_blocks().size() == 2);
+  while (t->dstatus("/sandbox/scale_down.txt").data_blocks().size() >= 2);
 
   for (std::size_t i = 1; i < 1000; i++) {
     std::string key = std::to_string(i);
-    REQUIRE(std::dynamic_pointer_cast<hash_table_partition>(blocks[1]->impl())->get(key) == key);
+    std::vector<std::string> ret;
+    REQUIRE_NOTHROW(blocks[0]->impl()->run_command(ret, 0, {}));
+    REQUIRE(ret.front() == "!block_moved");
+    REQUIRE_NOTHROW(blocks[2]->impl()->run_command(ret, 0, {}));
+    REQUIRE(ret.front() == "!block_moved");
+  }
+  for (std::size_t i = 1; i < 1000; i++) {
+    std::string key = std::to_string(i);
+    REQUIRE(client.get(key) == key);
   }
 
   as_server->stop();
@@ -175,7 +184,8 @@ TEST_CASE("hash_table_auto_scale_down_test", "[directory_service][storage_server
     dir_serve_thread.join();
   }
 }
-*/
+
+
 
 
 
@@ -447,6 +457,7 @@ TEST_CASE("fifo_queue_auto_scale_test", "[directory_service][storage_server][man
   }
   // Busy wait until number of blocks increases
   while (t->dstatus("/sandbox/scale_up.txt").data_blocks().size() > 1);
+
 
   as_server->stop();
   if(auto_scaling_thread.joinable()) {

@@ -39,7 +39,7 @@ TEST_CASE("fifo_queue_send_clear_read_test", "[send][read]") {
   }
 }
 
-TEST_CASE("file_storage_size_test", "[put][size][storage_size][reset]") {
+TEST_CASE("fifo_queue_storage_size_test", "[put][size][storage_size][reset]") {
   block_memory_manager manager;
   fifo_queue_partition block(&manager);
   for (std::size_t i = 0; i < 1000; ++i) {
@@ -48,7 +48,7 @@ TEST_CASE("file_storage_size_test", "[put][size][storage_size][reset]") {
   REQUIRE(block.storage_size() <= block.storage_capacity());
 }
 
-TEST_CASE("file_flush_load_test", "[send][sync][reset][load][read]") {
+TEST_CASE("fifo_queue_flush_load_test", "[send][sync][reset][load][read]") {
   block_memory_manager manager;
   fifo_queue_partition block(&manager);
   for (std::size_t i = 0; i < 1000; ++i) {

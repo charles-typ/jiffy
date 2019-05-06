@@ -17,6 +17,9 @@ fifo_queue_client::fifo_queue_client(std::shared_ptr<directory::directory_interf
     : data_structure_client(fs, path, status, FIFO_QUEUE_OPS, timeout_ms) {
   dequeue_partition_ = 0;
   enqueue_partition_ = 0;
+  for (const auto &block: status.data_blocks()) {
+    blocks_.push_back(std::make_shared<replica_chain_client>(fs_, path_, block, FIFO_QUEUE_OPS, timeout_ms_));
+  }
 }
 
 void fifo_queue_client::refresh() {

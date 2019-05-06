@@ -176,6 +176,8 @@ class btree_client : data_structure_client {
   std::vector<std::string> slots_;
   /* Redo times */
   std::size_t redo_times = 0;
+  /* Replica chain clients, each partition only save a replica chain client */
+  std::vector<std::shared_ptr<replica_chain_client>> blocks_;
 
 };
 

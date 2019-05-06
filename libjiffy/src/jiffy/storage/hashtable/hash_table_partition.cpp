@@ -52,8 +52,6 @@ std::string hash_table_partition::put(const std::string &key, const std::string 
   //LOG(log_level::info) << "Putting key: " << key << " storage_size " << storage_size() << "storage_capacity "
   //                     << storage_capacity();
   //LOG(log_level::info) << "Putting: ";
-  //for(int p = 0; p < key.length(); p++)
-  //LOG(log_level::info) << (int)((std::uint8_t)key[p]);
   auto hash = hash_slot::get(key);
   //LOG(log_level::info) << "Put hash " << hash << " in partition " << name();
   //LOG(log_level::info) << "Putting key: " << key << " Value: " << value << " Hash: " << hash <<" On partition: " << name();
@@ -108,17 +106,18 @@ std::string hash_table_partition::exists(const std::string &key, bool redirect) 
 }
 
 std::string hash_table_partition::get(const std::string &key, bool redirect) {
-  //LOG(log_level::info) << "Getting " << key;
   auto hash = hash_slot::get(key);
+  //LOG(log_level::info) << "hash " << hash << " name " << name();
+  //LOG(log_level::info) << "Getting " << key << " hash: " << hash << " from partition " << name() << " metadata: " << metadata();
   if (in_slot_range(hash) || (in_import_slot_range(hash) && redirect)) {
     try {
       return to_string(block_.find(key));
     } catch (std::out_of_range &e) {
       if (metadata_ == "exporting" && in_export_slot_range(hash)) {
-        //LOG(log_level::info) << "redirect getting " << key;
+    //    LOG(log_level::info) << "redirect getting " << key;
         return "!exporting!" + export_target_str();
       }
-      //LOG(log_level::info) << "key is not found " << key;
+     // LOG(log_level::info) << "key is not found " << key;
       return "!key_not_found";
     }
   }
@@ -255,7 +254,7 @@ std::string hash_table_partition::update_partition(const std::string &new_name, 
     auto range = utils::string_utils::split(s[1], '_');
     export_slot_range(std::stoi(range[0]), std::stoi(range[1]));
   } else if (status == "importing") {
-    if (metadata() != "regular") {
+    if (metadata() != "regular" && metadata() != "split_importing") {
       update_lock.unlock();
       return "!fail";
     }

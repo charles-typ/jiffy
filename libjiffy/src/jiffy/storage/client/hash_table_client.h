@@ -111,7 +111,7 @@ class hash_table_client : public data_structure_client {
    * @return Block identifier
    */
 
-  size_t block_id(const std::string &key);
+  std::size_t block_id(const std::string &key);
 
   /**
    * @brief Run same operation in batch
@@ -149,6 +149,7 @@ class hash_table_client : public data_structure_client {
   std::vector<int32_t> slots_;
   /* Redo times */
   std::size_t redo_times = 0;
+  std::map<int32_t, std::shared_ptr<replica_chain_client>> blocks_;
 };
 
 }
