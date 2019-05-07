@@ -19,9 +19,9 @@ file_partition::file_partition(block_memory_manager *manager,
                                const std::string &metadata,
                                const utils::property_map &conf,
                                const std::string &directory_host,
-                               const int directory_port,
+                               int directory_port,
                                const std::string &auto_scaling_host,
-                               const int auto_scaling_port)
+                               int auto_scaling_port)
     : chain_module(manager, name, metadata, FILE_OPS),
       partition_(manager->mb_capacity(), build_allocator<char>()),
       overload_(false),
@@ -31,6 +31,8 @@ file_partition::file_partition(block_memory_manager *manager,
       directory_port_(directory_port),
       auto_scaling_host_(auto_scaling_host),
       auto_scaling_port_(auto_scaling_port) {
+  (void) directory_host_;
+  (void) directory_port_;
   auto ser = conf.get("file.serializer", "csv");
   if (ser == "binary") {
     ser_ = std::make_shared<csv_serde>(binary_allocator_);
@@ -54,7 +56,7 @@ std::string file_partition::write(const std::string &message) {
     }
   }
   auto ret = partition_.push_back(message);
-  if(!ret.first) {
+  if (!ret.first) {
     split_string_ = true;
     //TODO at this point we assume that next_target_str is always set before the last string to write, this could cause error when the last string is bigger than 6.4MB
     return "!split_write!" + next_target_str() + "!" + std::to_string(ret.second.size());
@@ -67,18 +69,18 @@ std::string file_partition::read(std::string position) {
   auto pos = std::stoi(position);
   if (pos < 0) throw std::invalid_argument("read position invalid");
   auto ret = partition_.at(static_cast<std::size_t>(pos));
-  if(ret.first) {
+  if (ret.first) {
     return ret.second;
-  } else if(ret.second == "!reach_end") {
+  } else if (ret.second == "!reach_end") {
     if (!next_target_str().empty())
       return "!msg_not_in_partition";
     else
       return "!redo";
-  } else if(ret.second == "!not_available") {
+  } else if (ret.second == "!not_available") {
     return "!msg_not_found";
   } else {
     // This next target string is always set cause it needs to write first and then read
-      return "!split_read!" + ret.second;
+    return "!split_read!" + ret.second;
   }
 }
 

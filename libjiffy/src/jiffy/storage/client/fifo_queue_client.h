@@ -48,22 +48,6 @@ class fifo_queue_client : data_structure_client {
 
   std::string dequeue();
 
-  /**
-   * @brief Send message in batch
-   * @param msgs New messages
-   * @return Response of the commands
-   */
-
-  std::vector<std::string> enqueue(const std::vector<std::string> &msgs);
-
-  /**
-   * @brief Read message in batch
-   * @param num_msg Number of message to be read in batch
-   * @return Response of batch command
-   */
-
-  std::vector<std::string> dequeue(std::size_t num_msg);
-
  private:
 
   /**

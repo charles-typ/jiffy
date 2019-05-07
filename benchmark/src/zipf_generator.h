@@ -148,7 +148,6 @@ const uint16_t hash_slot::crc16tab[256] = {
     0x6e17, 0x7e36, 0x4e55, 0x5e74, 0x2e93, 0x3eb2, 0x0ed1, 0x1ef0
 };
 
-
 void alpha_key_generator(std::size_t num_keys, double theta = 0, int num_buckets = 512) {
   zipfgenerator zipf(theta, num_buckets);
   std::vector<uint64_t> zipfresult;
@@ -163,11 +162,10 @@ void alpha_key_generator(std::size_t num_keys, double theta = 0, int num_buckets
   for (std::size_t i = 0; i < num_keys; i++) {
     bucket_dist[zipf.next()]++;
   }
-  for(uint64_t i = 0; i < 512;i++)
-  {
-    for(uint64_t j = 0; j < 78125;j++) {
+  for (uint64_t i = 0; i < 512; i++) {
+    for (uint64_t j = 0; j < 78125; j++) {
       in >> str;
-      if(j < bucket_dist[i]) {
+      if (j < bucket_dist[i]) {
         out << str << std::endl;
       }
     }
@@ -175,7 +173,5 @@ void alpha_key_generator(std::size_t num_keys, double theta = 0, int num_buckets
   in.close();
   out.close();
 }
-
-
 
 #endif // JIFFY_ZIPF_GENERATOR_HPP

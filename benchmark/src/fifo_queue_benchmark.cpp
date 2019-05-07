@@ -20,9 +20,9 @@ typedef std::vector<client_ptr> client_list;
 class fifo_queue_benchmark {
  public:
   fifo_queue_benchmark(client_list &clients,
-                      size_t data_size,
-                      size_t num_clients,
-                      size_t num_ops)
+                       size_t data_size,
+                       size_t num_clients,
+                       size_t num_ops)
 
       : data_(data_size, 'x'),
         num_clients_(num_clients),
@@ -62,9 +62,9 @@ class fifo_queue_benchmark {
 class enqueue_benchmark : public fifo_queue_benchmark {
  public:
   enqueue_benchmark(client_list &clients,
-                 size_t data_size,
-                 size_t num_clients,
-                 size_t num_ops) : fifo_queue_benchmark(clients, data_size, num_clients, num_ops) {
+                    size_t data_size,
+                    size_t num_clients,
+                    size_t num_ops) : fifo_queue_benchmark(clients, data_size, num_clients, num_ops) {
   }
 
   void run() override {
@@ -90,9 +90,9 @@ class enqueue_benchmark : public fifo_queue_benchmark {
 class dequeue_benchmark : public fifo_queue_benchmark {
  public:
   dequeue_benchmark(client_list &clients,
-                 size_t data_size,
-                 size_t num_clients,
-                 size_t num_ops) : fifo_queue_benchmark(clients, data_size, num_clients, num_ops) {
+                    size_t data_size,
+                    size_t num_clients,
+                    size_t num_ops) : fifo_queue_benchmark(clients, data_size, num_clients, num_ops) {
   }
 
   void run() override {
@@ -167,7 +167,6 @@ int main() {
       auto result = benchmark->wait();
       client.remove(path);
       LOG(log_level::info) << op_type << " " << num_clients << " " << result.second << " " << result.first;
-      /*
       LOG(log_level::info) << "===== " << op_type << " ======";
       LOG(log_level::info) << "\t" << num_ops << " requests completed in " << ((double) num_ops / result.first)
                            << " us";
@@ -175,7 +174,6 @@ int main() {
       LOG(log_level::info) << "\t" << data_size << " payload";
       LOG(log_level::info) << "\tAverage latency: " << result.second;
       LOG(log_level::info) << "\tThroughput: " << result.first << " requests per microsecond";
-      */
     }
   }
   return 0;

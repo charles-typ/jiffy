@@ -52,7 +52,6 @@ std::vector<std::string> keygenerator(std::size_t num_keys, double theta = 0, in
 
 int main() {
   size_t num_ops = 419430;
-  //size_t num_ops = 10000;
   std::vector<std::string> keys = keygenerator(num_ops);
   std::string address = "127.0.0.1";
   int service_port = 9090;
@@ -70,7 +69,6 @@ int main() {
   LOG(log_level::info) << "num-blocks: " << num_blocks;
   LOG(log_level::info) << "chain-length: " << chain_length;
   LOG(log_level::info) << "num-ops: " << num_ops;
-  //LOG(log_level::info) << "data-size: " << data_size;
   LOG(log_level::info) << "test: " << op_type;
   LOG(log_level::info) << "path: " << path;
   LOG(log_level::info) << "backing-path: " << backing_path;
@@ -127,7 +125,7 @@ int main() {
     remove_tot_time = (remove_t1 - remove_t0);
     auto cur_epoch = ts::duration_cast<ts::milliseconds>(ts::system_clock::now().time_since_epoch()).count();
     out << cur_epoch << " " << remove_tot_time << " remove " << key << std::endl;
-    if(j == 0)
+    if (j == 0)
       break;
   }
 

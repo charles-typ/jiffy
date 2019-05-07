@@ -19,9 +19,9 @@ hash_table_partition::hash_table_partition(block_memory_manager *manager,
                                            const std::string &metadata,
                                            const utils::property_map &conf,
                                            const std::string &directory_host,
-                                           const int directory_port,
+                                           int directory_port,
                                            const std::string &auto_scaling_host,
-                                           const int auto_scaling_port)
+                                           int auto_scaling_port)
     : chain_module(manager, name, metadata, KV_OPS),
       block_(HASH_TABLE_DEFAULT_SIZE, hash_type(), equal_type()),
       splitting_(false),

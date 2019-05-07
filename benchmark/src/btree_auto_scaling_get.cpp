@@ -29,8 +29,6 @@ int main() {
     std::cerr << "Cannot open the File : " << fileName << std::endl;
   }
   size_t num_ops = 419430;
-  //size_t num_ops = 900;
-  //size_t num_ops = 70000;
   std::vector<std::string> keys;
   for (size_t j = 0; j < num_ops; j++) {
     std::string str;
@@ -65,7 +63,6 @@ int main() {
   std::shared_ptr<btree_client>
       bt_client = client.open_or_create_btree(path, backing_path, num_blocks, chain_length);
   uint64_t get_tot_time = 0, get_t0 = 0, get_t1 = 0;
-  //std::chrono::milliseconds periodicity_ms_(1000);
   size_t k = 0;
   std::ofstream out("get_latency.trace");
   while (1) {

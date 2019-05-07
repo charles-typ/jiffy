@@ -19,9 +19,9 @@ fifo_queue_partition::fifo_queue_partition(block_memory_manager *manager,
                                            const std::string &metadata,
                                            const utils::property_map &conf,
                                            const std::string &directory_host,
-                                           const int directory_port,
+                                           int directory_port,
                                            const std::string &auto_scaling_host,
-                                           const int auto_scaling_port)
+                                           int auto_scaling_port)
     : chain_module(manager, name, metadata, FIFO_QUEUE_OPS),
       partition_(manager->mb_capacity(), build_allocator<char>()),
       overload_(false),
@@ -33,6 +33,8 @@ fifo_queue_partition::fifo_queue_partition(block_memory_manager *manager,
       directory_port_(directory_port),
       auto_scaling_host_(auto_scaling_host),
       auto_scaling_port_(auto_scaling_port) {
+  (void) directory_host_;
+  (void) directory_port_;
   auto ser = conf.get("fifoqueue.serializer", "csv");
   if (ser == "binary") {
     ser_ = std::make_shared<csv_serde>(binary_allocator_);
@@ -88,6 +90,26 @@ std::string fifo_queue_partition::dequeue() {
     return "!split_dequeue!" + ret.second;
   }
 }
+// TODO fix this function
+std::string fifo_queue_partition::readnext() {
+  //LOG(log_level::info) << "Reading next " << head_;
+  auto ret = partition_.at(head_);
+  if (ret.first) {
+    return ret.second;
+  } else if (ret.second == "!reach_end") {
+    if (!next_target_str().empty()) {
+      new_block_available_ = true;
+      return "!msg_not_in_partition";
+    } else {
+      return "!redo";
+    }
+  } else if (ret.second == "!not_available") {
+    return "!msg_not_found";
+  } else {
+    // This next target string is always set cause it needs to write first and then read
+    return "!split_readnext!" + ret.second;
+  }
+}
 
 std::string fifo_queue_partition::clear() {
   partition_.clear();
@@ -132,6 +154,13 @@ void fifo_queue_partition::run_command(std::vector<std::string> &_return,
         _return.emplace_back("!args_error");
       } else {
         _return.emplace_back(update_partition(args[0]));
+      }
+      break;
+    case fifo_queue_cmd_id::fq_readnext:
+      if (nargs != 0) {
+        _return.emplace_back("!args_error");
+      } else {
+        _return.emplace_back(readnext());
       }
       break;
     default:throw std::invalid_argument("No such operation id " + std::to_string(cmd_id));

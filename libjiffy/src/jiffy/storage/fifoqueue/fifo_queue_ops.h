@@ -18,6 +18,7 @@ enum fifo_queue_cmd_id {
   fq_dequeue = 1,
   fq_clear = 2,
   fq_update_partition = 3,
+  fq_readnext = 4,
 };
 
 }

@@ -215,7 +215,6 @@ int main() {
       auto result = benchmark->wait();
       client.remove(path);
       LOG(log_level::info) << op_type << " " << num_clients << " " << result.second << " " << result.first;
-      /*
       LOG(log_level::info) << "===== " << op_type << " ======";
       LOG(log_level::info) << "\t" << num_ops << " requests completed in " << ((double) num_ops / result.first)
                            << " us";
@@ -223,7 +222,6 @@ int main() {
       LOG(log_level::info) << "\t" << data_size << " payload";
       LOG(log_level::info) << "\tAverage latency: " << result.second;
       LOG(log_level::info) << "\tThroughput: " << result.first << " requests per microsecond";
-       */
 
     }
   }

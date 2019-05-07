@@ -34,7 +34,6 @@ void generate_words() { // TODO fix this to a much simple version
   }
 }
 
-
 void keygenerator(std::size_t num_keys, double theta = 0, int num_buckets = 512) {
   zipfgenerator zipf(theta, num_buckets);
   std::vector<uint64_t> zipfresult;
