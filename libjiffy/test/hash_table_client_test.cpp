@@ -187,7 +187,7 @@ TEST_CASE("hash_table_client_put_remove_get_test", "[put][remove][get]") {
   }
 }
 
-/* TODO need to fix batch operations
+
 TEST_CASE("hash_table_client_pipelined_ops_test", "[put][update][remove][get]") {
   auto alloc = std::make_shared<sequential_block_allocator>();
   auto block_names = test_utils::init_block_names(NUM_BLOCKS, STORAGE_SERVICE_PORT, STORAGE_MANAGEMENT_PORT);
@@ -314,4 +314,4 @@ TEST_CASE("hash_table_client_pipelined_ops_test", "[put][update][remove][get]") 
     dir_serve_thread.join();
   }
 }
- */
+
