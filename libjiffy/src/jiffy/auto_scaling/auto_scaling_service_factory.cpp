@@ -11,7 +11,8 @@ using namespace ::apache::thrift;
 using namespace ::apache::thrift::transport;
 using namespace utils;
 
-auto_scaling_service_factory::auto_scaling_service_factory(const std::string directory_host, int directory_port): directory_host_(directory_host), directory_port_(directory_port) {}
+auto_scaling_service_factory::auto_scaling_service_factory(const std::string directory_host, int directory_port)
+    : directory_host_(directory_host), directory_port_(directory_port) {}
 
 auto_scaling_serviceIf *auto_scaling_service_factory::getHandler(const TConnectionInfo &conn_info) {
   std::shared_ptr<TSocket> sock = std::dynamic_pointer_cast<TSocket>(conn_info.transport);

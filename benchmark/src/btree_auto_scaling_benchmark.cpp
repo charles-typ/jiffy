@@ -62,7 +62,6 @@ int main() {
   std::shared_ptr<btree_client>
       bt_client = client.open_or_create_btree(path, backing_path, num_blocks, chain_length);
   std::chrono::milliseconds periodicity_ms_(1000);
-  std::chrono::milliseconds periodicity_(50);
   uint64_t put_tot_time = 0, put_t0 = 0, put_t1 = 0;
   std::atomic_bool stop_{false};
   std::size_t j = 0;

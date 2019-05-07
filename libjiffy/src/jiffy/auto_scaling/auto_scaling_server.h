@@ -5,14 +5,15 @@
 
 namespace jiffy {
 namespace auto_scaling {
-/* Storage management server class */
+/* Auto scaling server class */
 class auto_scaling_server {
  public:
   /**
-   * @brief Create a storage management server
-   * @param blocks Blocks
-   * @param address Socket address
-   * @param port Socket port number
+   * @brief Create an auto scaling server
+   * @param directory_host Directory server host address
+   * @param directory_port Directory server port number
+   * @param address Auto scaling server host address
+   * @param port Auto scaling server port number
    * @return Server
    */
   static std::shared_ptr<apache::thrift::server::TThreadedServer> create(const std::string directory_host,

@@ -36,7 +36,9 @@ void auto_scaling_client::disconnect() {
   }
 }
 
-void auto_scaling_client::auto_scaling(const std::vector<std::string> & current_replica_chain, const std::string& path, const std::map<std::string, std::string> & conf) {
+void auto_scaling_client::auto_scaling(const std::vector<std::string> &current_replica_chain,
+                                       const std::string &path,
+                                       const std::map<std::string, std::string> &conf) {
   client_->auto_scaling(current_replica_chain, path, conf);
 }
 

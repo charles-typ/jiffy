@@ -102,13 +102,13 @@ std::shared_ptr<storage::hash_table_client> jiffy_client::open_or_create_hash_ta
 }
 
 std::shared_ptr<storage::file_client> jiffy_client::open_or_create_file(const std::string &path,
-                                                                                  const std::string &backing_path,
-                                                                                  int32_t num_blocks,
-                                                                                  int32_t chain_length,
-                                                                                  int32_t flags,
-                                                                                  int32_t permissions,
-                                                                                  const std::map<std::string,
-                                                                                                 std::string> &tags) {
+                                                                        const std::string &backing_path,
+                                                                        int32_t num_blocks,
+                                                                        int32_t chain_length,
+                                                                        int32_t flags,
+                                                                        int32_t permissions,
+                                                                        const std::map<std::string,
+                                                                                       std::string> &tags) {
   std::vector<std::string> block_names;
   std::vector<std::string> block_metadata;
   for (int32_t i = 0; i < num_blocks; ++i) {

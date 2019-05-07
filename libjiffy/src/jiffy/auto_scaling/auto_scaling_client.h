@@ -4,10 +4,9 @@
 #include <thrift/transport/TSocket.h>
 #include "auto_scaling_service.h"
 
-
 namespace jiffy {
 namespace auto_scaling {
-/* Storage management client class */
+/* Auto scaling client class */
 class auto_scaling_client {
  public:
   typedef auto_scaling_serviceClient thrift_client;
@@ -21,7 +20,7 @@ class auto_scaling_client {
 
   /**
    * @brief Constructor
-   * @param host Storage management server hostname
+   * @param host Auto scaling server hostname
    * @param port Port number
    */
 
@@ -29,7 +28,7 @@ class auto_scaling_client {
 
   /**
    * @brief Connect
-   * @param host Storage management server hostname
+   * @param host Auto scaling server hostname
    * @param port Port number
    */
 
@@ -41,7 +40,15 @@ class auto_scaling_client {
 
   void disconnect();
 
-  void auto_scaling(const std::vector<std::string> & current_replica_chain, const std::string& path, const std::map<std::string, std::string> & conf);
+  /**
+   * @brief Auto scaling handling function
+   * @param current_replica_chain Current replica chain
+   * @param path Path
+   * @param conf Configuration map
+   */
+  void auto_scaling(const std::vector<std::string> &current_replica_chain,
+                    const std::string &path,
+                    const std::map<std::string, std::string> &conf);
 
  private:
   /* Socket */
@@ -50,7 +57,7 @@ class auto_scaling_client {
   std::shared_ptr<apache::thrift::transport::TTransport> transport_{};
   /* Protocol */
   std::shared_ptr<apache::thrift::protocol::TProtocol> protocol_{};
-  /* Storage management service client */
+  /* Auto scaling service client */
   std::shared_ptr<thrift_client> client_{};
 };
 

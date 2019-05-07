@@ -5,20 +5,18 @@
 
 namespace jiffy {
 namespace auto_scaling {
-/* Storage management service factory class
- * Inherited from storage management_serviceIfFactory class */
+/* Auto scaling service factory class */
 class auto_scaling_service_factory : public auto_scaling_serviceIfFactory {
  public:
-
   /**
    * @brief Constructor
-   * @param blocks Blocks
+   * @param directory_host Directory server host name
+   * @param directory_port Directory server port number
    */
-
   explicit auto_scaling_service_factory(const std::string directory_host, int directory_port);
 
   /**
-   * @brief Fetch storage management service handler
+   * @brief Fetch auto scaling service handler
    * @param connInfo Connection information
    * @return Handler
    */
@@ -32,9 +30,10 @@ class auto_scaling_service_factory : public auto_scaling_serviceIfFactory {
 
   void releaseHandler(auto_scaling_serviceIf *anIf) override;
 
-
  private:
+  /* Directory host name */
   std::string directory_host_;
+  /* Directory port number */
   int directory_port_;
 
 };
