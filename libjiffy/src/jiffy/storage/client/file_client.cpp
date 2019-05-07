@@ -100,7 +100,7 @@ void file_client::handle_redirect(int32_t cmd_id, const std::vector<std::string>
       std::vector<std::string> modified_args;
       modified_args.push_back(std::to_string(read_offset_));
       response = blocks_[block_id(static_cast<file_cmd_id >(cmd_id))]->run_command(cmd_id, modified_args).front();
-      if(response != "!msg_not_found") {
+      if (response != "!msg_not_found") {
         read_offset_ += (response.size() + metadata_length);
         read_flag = false;
       }
@@ -133,7 +133,7 @@ void file_client::handle_redirect(int32_t cmd_id, const std::vector<std::string>
       auto second_part_string =
           blocks_[block_id(static_cast<file_cmd_id >(cmd_id))]->run_command(cmd_id, modified_args).front();
       response = first_part_string + second_part_string;
-      if(response != "!msg_not_found") {
+      if (response != "!msg_not_found") {
         read_offset_ += (second_part_string.size() + metadata_length);
         read_flag = false;
       }
@@ -145,11 +145,11 @@ void file_client::handle_redirect(int32_t cmd_id, const std::vector<std::string>
 }
 
 void file_client::handle_redirects(int32_t cmd_id,
-                                   const std::vector<std::string> &args,
+                                   std::vector<std::string> &args,
                                    std::vector<std::string> &responses) {
-  (void)cmd_id;
-  (void)args;
-  (void)responses;
+  (void) cmd_id;
+  (void) args;
+  (void) responses;
 }
 
 }

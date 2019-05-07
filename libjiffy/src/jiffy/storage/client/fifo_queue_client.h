@@ -22,9 +22,9 @@ class fifo_queue_client : data_structure_client {
    */
 
   fifo_queue_client(std::shared_ptr<directory::directory_interface> fs,
-                   const std::string &path,
-                   const directory::data_status &status,
-                   int timeout_ms = 1000);
+                    const std::string &path,
+                    const directory::data_status &status,
+                    int timeout_ms = 1000);
 
   virtual ~fifo_queue_client() = default;
   /**
@@ -90,7 +90,7 @@ class fifo_queue_client : data_structure_client {
    */
 
   void handle_redirects(int32_t cmd_id,
-                        const std::vector<std::string> &args,
+                        std::vector<std::string> &args,
                         std::vector<std::string> &responses) override;
 
   /* Dequeue partition id */

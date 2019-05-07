@@ -88,7 +88,7 @@ class btree_client : data_structure_client {
    * @return Response of batch command
    */
 
-  std::vector<std::string> put(const std::vector<std::string> &kvs);
+  std::vector<std::string> put(std::vector<std::string> &kvs);
 
   /**
    * @brief Get in batch
@@ -96,7 +96,7 @@ class btree_client : data_structure_client {
    * @return Response of batch command
    */
 
-  std::vector<std::string> get(const std::vector<std::string> &keys);
+  std::vector<std::string> get(std::vector<std::string> &keys);
 
   /**
    * @brief Update in batch
@@ -104,7 +104,7 @@ class btree_client : data_structure_client {
    * @return Response of batch command
    */
 
-  std::vector<std::string> update(const std::vector<std::string> &kvs);
+  std::vector<std::string> update(std::vector<std::string> &kvs);
 
   /**
    * @brief Remove in batch
@@ -112,7 +112,7 @@ class btree_client : data_structure_client {
    * @return Response of batch command
    */
 
-  std::vector<std::string> remove(const std::vector<std::string> &keys);
+  std::vector<std::string> remove(std::vector<std::string> &keys);
 
   /**
    * @brief Look up values within key range in batch
@@ -121,7 +121,7 @@ class btree_client : data_structure_client {
    * @param num_keys Maximum number of keys to lookup
    * @return Value of keys that are within the key range
    */
-  std::vector<std::string> range_lookup(const std::vector<std::string> args);
+  std::vector<std::string> range_lookup(std::vector<std::string> args);
 
   /**
     * @brief Count keys within the key range in batch
@@ -129,7 +129,7 @@ class btree_client : data_structure_client {
     * @param end_range Key range end
     * @return Keys count within the range
     */
-  std::vector<std::string> range_count(const std::vector<std::string> args);
+  std::vector<std::string> range_count(std::vector<std::string> args);
 
  private:
   /**
@@ -169,7 +169,7 @@ class btree_client : data_structure_client {
    */
 
   void handle_redirects(int32_t cmd_id,
-                        const std::vector<std::string> &args,
+                        std::vector<std::string> &args,
                         std::vector<std::string> &responses) override;
 
   /* Slot begin of the blocks */

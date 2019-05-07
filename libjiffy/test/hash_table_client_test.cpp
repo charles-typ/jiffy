@@ -2,6 +2,7 @@
 #include <thrift/transport/TTransportException.h>
 #include <thread>
 #include "test_utils.h"
+#include "jiffy/utils/logger.h"
 #include "jiffy/directory/fs/directory_tree.h"
 #include "jiffy/directory/fs/directory_server.h"
 #include "jiffy/storage/manager/storage_management_server.h"
@@ -18,6 +19,7 @@ using namespace ::jiffy::storage;
 using namespace ::jiffy::directory;
 using namespace ::jiffy::auto_scaling;
 using namespace ::apache::thrift::transport;
+using namespace ::jiffy::utils;
 
 #define NUM_BLOCKS 3
 #define HOST "127.0.0.1"
@@ -292,6 +294,8 @@ TEST_CASE("hash_table_client_pipelined_ops_test", "[put][update][remove][get]") 
   for (size_t i = 0; i < 1000; i++) {
     REQUIRE(res8[i] == "!key_not_found");
   }
+  // Busy wait until number of blocks decreases
+  while (tree->dstatus("/sandbox/file.txt").data_blocks().size() >= 2);
 
   as_server->stop();
   if(auto_scaling_thread.joinable()) {

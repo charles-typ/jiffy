@@ -90,7 +90,7 @@ class file_client : data_structure_client {
    */
 
   void handle_redirects(int32_t cmd_id,
-                        const std::vector<std::string> &args,
+                        std::vector<std::string> &args,
                         std::vector<std::string> &responses) override;
 
   /* Read start */

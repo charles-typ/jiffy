@@ -11,9 +11,9 @@ namespace storage {
 using namespace jiffy::utils;
 
 fifo_queue_client::fifo_queue_client(std::shared_ptr<directory::directory_interface> fs,
-                                   const std::string &path,
-                                   const directory::data_status &status,
-                                   int timeout_ms)
+                                     const std::string &path,
+                                     const directory::data_status &status,
+                                     int timeout_ms)
     : data_structure_client(fs, path, status, FIFO_QUEUE_OPS, timeout_ms) {
   dequeue_partition_ = 0;
   enqueue_partition_ = 0;
@@ -36,7 +36,8 @@ std::string fifo_queue_client::enqueue(const std::string &msg) {
   bool redo;
   do {
     try {
-      _return = blocks_[block_id(fifo_queue_cmd_id::fq_enqueue)]->run_command(fifo_queue_cmd_id::fq_enqueue, args).front();
+      _return =
+          blocks_[block_id(fifo_queue_cmd_id::fq_enqueue)]->run_command(fifo_queue_cmd_id::fq_enqueue, args).front();
       handle_redirect(fifo_queue_cmd_id::fq_enqueue, args, _return);
       redo = false;
     } catch (redo_error &e) {
@@ -52,7 +53,8 @@ std::string fifo_queue_client::dequeue() {
   bool redo;
   do {
     try {
-      _return = blocks_[block_id(fifo_queue_cmd_id::fq_dequeue)]->run_command(fifo_queue_cmd_id::fq_dequeue, {}).front();
+      _return =
+          blocks_[block_id(fifo_queue_cmd_id::fq_dequeue)]->run_command(fifo_queue_cmd_id::fq_dequeue, {}).front();
       handle_redirect(fifo_queue_cmd_id::fq_dequeue, {}, _return);
       redo = false;
     } catch (redo_error &e) {
@@ -127,11 +129,11 @@ void fifo_queue_client::handle_redirect(int32_t cmd_id, const std::vector<std::s
 // Remove batch commands
 
 void fifo_queue_client::handle_redirects(int32_t cmd_id,
-                                        const std::vector<std::string> &args,
-                                        std::vector<std::string> &responses) {
-  (void)cmd_id;
-  (void)args;
-  (void)responses;
+                                         std::vector<std::string> &args,
+                                         std::vector<std::string> &responses) {
+  (void) cmd_id;
+  (void) args;
+  (void) responses;
 }
 
 }

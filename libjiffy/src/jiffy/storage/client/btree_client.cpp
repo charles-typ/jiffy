@@ -153,7 +153,7 @@ std::string btree_client::range_count(const std::string &begin_range,
   return _return;
 }
 // TODO batch command should be fixed
-std::vector<std::string> btree_client::put(const std::vector<std::string> &kvs) {
+std::vector<std::string> btree_client::put(std::vector<std::string> &kvs) {
   if (kvs.size() % 2 != 0) {
     throw std::invalid_argument("Incorrect number of arguments");
   }
@@ -171,7 +171,7 @@ std::vector<std::string> btree_client::put(const std::vector<std::string> &kvs) 
   return _return;
 }
 
-std::vector<std::string> btree_client::get(const std::vector<std::string> &keys) {
+std::vector<std::string> btree_client::get(std::vector<std::string> &keys) {
   std::vector<std::string> _return;
   bool redo;
   do {
@@ -186,7 +186,7 @@ std::vector<std::string> btree_client::get(const std::vector<std::string> &keys)
   return _return;
 }
 
-std::vector<std::string> btree_client::update(const std::vector<std::string> &kvs) {
+std::vector<std::string> btree_client::update(std::vector<std::string> &kvs) {
   if (kvs.size() % 2 != 0) {
     throw std::invalid_argument("Incorrect number of arguments");
   }
@@ -204,7 +204,7 @@ std::vector<std::string> btree_client::update(const std::vector<std::string> &kv
   return _return;
 }
 
-std::vector<std::string> btree_client::remove(const std::vector<std::string> &keys) {
+std::vector<std::string> btree_client::remove(std::vector<std::string> &keys) {
   std::vector<std::string> _return;
   bool redo;
   do {
@@ -219,7 +219,7 @@ std::vector<std::string> btree_client::remove(const std::vector<std::string> &ke
   return _return;
 }
 
-std::vector<std::string> btree_client::range_lookup(const std::vector<std::string> args) {
+std::vector<std::string> btree_client::range_lookup(std::vector<std::string> args) {
   if (args.size() % 2 != 0) {
     throw std::invalid_argument("Incorrect number of arguments");
   }
@@ -237,7 +237,7 @@ std::vector<std::string> btree_client::range_lookup(const std::vector<std::strin
   return _return;
 }
 
-std::vector<std::string> btree_client::range_count(const std::vector<std::string> args) {
+std::vector<std::string> btree_client::range_count(std::vector<std::string> args) {
   if (args.size() % 2 != 0) {
     throw std::invalid_argument("Incorrect number of arguments");
   }
@@ -331,7 +331,7 @@ void btree_client::handle_redirect(int32_t cmd_id, const std::vector<std::string
 }
 
 void btree_client::handle_redirects(int32_t cmd_id,
-                                    const std::vector<std::string> &args,
+                                    std::vector<std::string> &args,
                                     std::vector<std::string> &responses) {
   size_t n_ops = responses.size();
   size_t n_op_args = args.size() / n_ops;
