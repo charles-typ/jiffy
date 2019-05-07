@@ -61,7 +61,7 @@ class block_memory_manager {
    * @param other Instance of other block memory manager.
    * @return True if the instances are equal, false otherwise.
    */
-  inline bool operator==(const block_memory_manager& other){
+  inline bool operator==(const block_memory_manager &other) {
     return this == &other;
   }
 
@@ -70,7 +70,7 @@ class block_memory_manager {
    * @param other Instance of other block memory manager.
    * @return True if the instances are unequal, false otherwise.
    */
-  inline bool operator!=(const block_memory_manager& other){
+  inline bool operator!=(const block_memory_manager &other) {
     return this != &other;
   }
 

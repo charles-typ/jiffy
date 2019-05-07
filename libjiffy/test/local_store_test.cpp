@@ -14,9 +14,7 @@ binary make_binary(const std::string& str, const block_memory_allocator<uint8_t>
 
 TEST_CASE("local_write_test", "[write]") {
   block_memory_manager manager;
-  //block_memory_allocator<kv_pair_type> allocator(&manager);
   block_memory_allocator<uint8_t> binary_allocator(&manager);
-  //hash_table_type table(HASH_TABLE_DEFAULT_SIZE, hash_type(), equal_type(), allocator);
   hash_table_type table(HASH_TABLE_DEFAULT_SIZE, hash_type(), equal_type());
   auto ltable = table.lock_table();
   auto bkey = binary("key", binary_allocator);

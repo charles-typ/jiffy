@@ -33,8 +33,8 @@ fifo_queue_partition::fifo_queue_partition(block_memory_manager *manager,
       directory_port_(directory_port),
       auto_scaling_host_(auto_scaling_host),
       auto_scaling_port_(auto_scaling_port) {
-  (void) directory_host_;
-  (void) directory_port_;
+  (void)directory_host_;
+  (void)directory_port_;
   auto ser = conf.get("fifoqueue.serializer", "csv");
   if (ser == "binary") {
     ser_ = std::make_shared<csv_serde>(binary_allocator_);
@@ -49,7 +49,6 @@ fifo_queue_partition::fifo_queue_partition(block_memory_manager *manager,
 }
 
 std::string fifo_queue_partition::enqueue(const std::string &message) {
-  //LOG(log_level::info) << "Enqueue " << message << "partition size " << partition_.size() << " partition capacity " << partition_.capacity();
   if (partition_.size() > partition_.capacity() && !split_string_.load()) {
     if (!next_target_str().empty()) {
       new_block_available_ = true;
@@ -62,7 +61,7 @@ std::string fifo_queue_partition::enqueue(const std::string &message) {
   auto ret = partition_.push_back(message);
   if (!ret.first) {
     split_string_ = true;
-    //TODO at this point we assume that next_target_str is always set before the last string to write, this could cause error when the last string is bigger than 6.4MB
+    // TODO at this point we assume that next_target_str is always set before the last string to write, this could cause error when the last string is bigger than 6.4MB
     new_block_available_ = true;
     return "!split_enqueue!" + next_target_str() + "!" + std::to_string(ret.second.size());
   }
@@ -70,7 +69,6 @@ std::string fifo_queue_partition::enqueue(const std::string &message) {
 }
 
 std::string fifo_queue_partition::dequeue() {
-  //LOG(log_level::info) << "Dequeueing " << head_;
   auto ret = partition_.at(head_);
   if (ret.first) {
     head_ += (metadata_length + ret.second.size());
@@ -90,9 +88,9 @@ std::string fifo_queue_partition::dequeue() {
     return "!split_dequeue!" + ret.second;
   }
 }
+
 // TODO fix this function
 std::string fifo_queue_partition::readnext() {
-  //LOG(log_level::info) << "Reading next " << head_;
   auto ret = partition_.at(head_);
   if (ret.first) {
     return ret.second;
@@ -249,7 +247,6 @@ bool fifo_queue_partition::dump(const std::string &path) {
   partition_.clear();
   next_->reset("nil");
   path_ = "";
-  // clients().clear();
   sub_map_.clear();
   chain_ = {};
   role_ = singleton;

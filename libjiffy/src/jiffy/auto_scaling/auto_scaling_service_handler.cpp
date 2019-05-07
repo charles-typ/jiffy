@@ -13,6 +13,8 @@
 
 namespace jiffy {
 namespace auto_scaling {
+/* Mutex to make sure auto_scaling server handles one request at a time */
+std::mutex mtx_;
 
 using namespace utils;
 
@@ -163,7 +165,6 @@ void auto_scaling_service_handler::auto_scaling(const std::vector<std::string> &
       mtx_.unlock();
       throw make_exception("Partition is under auto_scaling");
     }
-    LOG(log_level::info) << "Start hash table merge auto_scaling: " << start;
     std::size_t storage_capacity = static_cast<std::size_t>(std::stoi(conf.find("storage_capacity")->second));
     auto replica_set = fs->dstatus(path).data_blocks();
     std::vector<std::string> slot_range = string_utils::split(name, '_', 2);
@@ -179,7 +180,6 @@ void auto_scaling_service_handler::auto_scaling(const std::vector<std::string> &
             client->run_command(storage::hash_table_cmd_id::ht_get_storage_size,
                                 {}).front();
         if (ret == "!block_moved") {
-          LOG(log_level::info) << "I think it breaks here";
           continue;
         }
 
@@ -197,7 +197,6 @@ void auto_scaling_service_handler::auto_scaling(const std::vector<std::string> &
     }
     auto finish_finding_chain_to_merge =
         std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-    LOG(log_level::info) << "Found replica chain to merge: " << finish_finding_chain_to_merge;
 
     // Connect two replica chains
     auto dst = std::make_shared<storage::replica_chain_client>(fs, path, merge_target, storage::KV_OPS);
@@ -270,12 +269,9 @@ void auto_scaling_service_handler::auto_scaling(const std::vector<std::string> &
     }
     auto finish_data_transmission =
         std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-    LOG(log_level::info) << "Finish data transmission for hash table merge: " << finish_data_transmission;
     fs->update_partition(path, merge_target.name, dst_partition_name, "regular");
     auto finish_update_partition_dir =
         std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-    LOG(log_level::info) << "Finish updating mapping on directory server after hash table merge: "
-                         << finish_update_partition_dir;
     //Setting name and metadata for src and dst
     std::vector<std::string> src_after_args;
     std::vector<std::string> dst_after_args;

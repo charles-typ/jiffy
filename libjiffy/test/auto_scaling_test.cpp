@@ -47,7 +47,6 @@ TEST_CASE("hash_table_auto_scale_up_test", "[directory_service][storage_server][
   auto alloc = std::make_shared<sequential_block_allocator>();
   auto block_names = test_utils::init_block_names(100, STORAGE_SERVICE_PORT, STORAGE_MANAGEMENT_PORT);
   alloc->add_blocks(block_names);
-  //auto blocks = test_utils::init_hash_table_blocks(block_names, 119150);
   auto blocks = test_utils::init_hash_table_blocks(block_names, 2200);
   auto storage_server = block_server::create(blocks, STORAGE_SERVICE_PORT);
   std::thread storage_serve_thread([&storage_server] { storage_server->serve(); });

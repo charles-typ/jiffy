@@ -81,7 +81,7 @@ byte_string::byte_string(byte_string &&other)
 }
 
 byte_string::~byte_string() {
-    allocator_.deallocate(data_, size_);
+  allocator_.deallocate(data_, size_);
 }
 
 uint8_t &byte_string::operator[](size_t idx) {
@@ -137,7 +137,6 @@ byte_string &byte_string::operator--() {
     data_[idx]--;
   return *this;
 }
-
 
 byte_string &byte_string::operator=(const byte_string &other) {
   size_ = other.size_;

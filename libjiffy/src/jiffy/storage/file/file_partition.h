@@ -16,6 +16,17 @@ namespace storage {
 class file_partition : public chain_module {
  public:
 
+  /**
+   * @brief Constructor
+   * @param manager Block memory manager
+   * @param name Partition name
+   * @param metadata Partition metadata
+   * @param conf Property map
+   * @param directory_host Directory server host name
+   * @param directory_port Directory server port number
+   * @param auto_scaling_host Auto scaling server host name
+   * @param auto_scaling_port Auto scaling server port number
+   */
   explicit file_partition(block_memory_manager *manager,
                           const std::string &name = "0",
                           const std::string &metadata = "regular",
@@ -87,7 +98,7 @@ class file_partition : public chain_module {
   bool is_dirty() const;
 
   /**
-   * @brief Load persistent data into the block, lock the block while doing this
+   * @brief Load persistent data into the block
    * @param path Persistent storage path
    */
 

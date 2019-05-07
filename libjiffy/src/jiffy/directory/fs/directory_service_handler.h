@@ -240,12 +240,13 @@ class directory_service_handler : public directory_serviceIf {
    */
 
   void load(const std::string &path, const std::string &backing_path) override;
+
   /**
-   * @brief
-   * @param _return
-   * @param path
-   * @param partition_name
-   * @param partition_metadata
+   * @brief Add replica chain
+   * @param _return Replica chain
+   * @param path File path
+   * @param partition_name New partition name
+   * @param partition_metadata New partition metadata
    */
   void add_data_block(rpc_replica_chain &_return,
                       const std::string &path,
@@ -253,18 +254,18 @@ class directory_service_handler : public directory_serviceIf {
                       const std::string &partition_metadata) override;
 
   /**
-   * @brief
-   * @param path
-   * @param partition_name
+   * @brief Remove chain
+   * @param path File path
+   * @param partition_name Partition name to be removed
    */
   void remove_data_block(const std::string &path, const std::string &partition_name) override;
 
   /**
-   * @brief
-   * @param path
-   * @param old_partition_name
-   * @param new_partition_name
-   * @param partition_metadata
+   * @brief Update partition data
+   * @param path File path
+   * @param old_partition_name Old partition name
+   * @param new_partition_name New partition name
+   * @param partition_metadata New partition metadata
    */
   void request_partition_data_update(const std::string &path,
                                      const std::string &old_partition_name,
@@ -272,10 +273,10 @@ class directory_service_handler : public directory_serviceIf {
                                      const std::string &partition_metadata) override;
 
   /**
-   * @brief
-   * @param path
-   * @param partition_name
-   * @return
+   * @brief Fetch storage capacity
+   * @param path File path
+   * @param partition_name Partition name
+   * @return Storage capacity
    */
   int64_t get_storage_capacity(const std::string &path, const std::string &partition_name) override;
 

@@ -47,8 +47,7 @@ class auto_scaling_service_handler : public auto_scaling_serviceIf {
   std::string directory_host_;
   /* Directory server port number */
   int directory_port_;
-  /* Mutex to make sure auto_scaling server handles one request at a time */
-  std::mutex mtx_;
+
 
 };
 

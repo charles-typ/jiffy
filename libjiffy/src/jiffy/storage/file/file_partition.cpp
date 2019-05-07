@@ -31,8 +31,8 @@ file_partition::file_partition(block_memory_manager *manager,
       directory_port_(directory_port),
       auto_scaling_host_(auto_scaling_host),
       auto_scaling_port_(auto_scaling_port) {
-  (void) directory_host_;
-  (void) directory_port_;
+  (void)directory_host_;
+  (void)directory_port_;
   auto ser = conf.get("file.serializer", "csv");
   if (ser == "binary") {
     ser_ = std::make_shared<csv_serde>(binary_allocator_);
@@ -46,8 +46,6 @@ file_partition::file_partition(block_memory_manager *manager,
 }
 
 std::string file_partition::write(const std::string &message) {
-  //LOG(log_level::info) << "Writing to file: " << message;
-  //LOG(log_level::info) << "partition size: " << partition_.size() << " partition capacity: " << partition_.capacity();
   if (partition_.size() > partition_.capacity() && !split_string_.load()) {
     if (!next_target_str().empty()) {
       return "!full!" + next_target_str();
@@ -65,7 +63,6 @@ std::string file_partition::write(const std::string &message) {
 }
 
 std::string file_partition::read(std::string position) {
-  //LOG(log_level::info) << "Reading at position " << position;
   auto pos = std::stoi(position);
   if (pos < 0) throw std::invalid_argument("read position invalid");
   auto ret = partition_.at(static_cast<std::size_t>(pos));
@@ -194,7 +191,6 @@ bool file_partition::dump(const std::string &path) {
   partition_.clear();
   next_->reset("nil");
   path_ = "";
-  // clients().clear();
   sub_map_.clear();
   chain_ = {};
   role_ = singleton;

@@ -20,9 +20,9 @@ class data_structure_client {
  public:
   /**
    * @brief Constructor
-   * Store all replica chain and their begin slot
    * @param fs Directory service
    * @param path Key value block path
+   * @param OPS operation type
    * @param status Data status
    * @param timeout_ms Timeout
    */

@@ -302,6 +302,11 @@ class hash_table_partition : public chain_module {
 
   std::string remove(const std::string &key, bool redirect = false);
 
+  /**
+   * @brief
+   * @param key
+   * @return
+   */
   std::string scale_remove(const std::string &key);
 
   /**
@@ -321,9 +326,9 @@ class hash_table_partition : public chain_module {
    */
 
   void get_data_in_slot_range(std::vector<std::string> &data,
-                                     int32_t slot_begin,
-                                     int32_t slot_end,
-                                     int32_t batch_size);
+                              int32_t slot_begin,
+                              int32_t slot_end,
+                              int32_t batch_size);
 
   /**
    * @brief Fetch block size
@@ -406,12 +411,6 @@ class hash_table_partition : public chain_module {
   void forward_all() override;
 
   /**
-   * @brief Export slots
-   */
-
-  void export_slots();
-
-  /**
    * @brief Set block to be exporting
    * @param target_block Export target block
    * @param slot_begin Begin slot
@@ -450,11 +449,6 @@ class hash_table_partition : public chain_module {
 
   /* Custom serializer/deserializer */
   std::shared_ptr<serde> ser_;
-
-  /**
-   * @brief The two threshold to determine whether the block
-   * is overloaded or underloaded
-   */
   /* Low threshold */
   double threshold_lo_;
   /* High threshold */

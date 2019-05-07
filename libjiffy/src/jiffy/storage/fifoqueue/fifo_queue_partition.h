@@ -12,18 +12,29 @@
 
 namespace jiffy {
 namespace storage {
-
+/* Fifo queue partition class */
 class fifo_queue_partition : public chain_module {
  public:
 
+  /**
+   * @brief Constructor
+   * @param manager Block memory manager
+   * @param name Partition name
+   * @param metadata Partition metadata
+   * @param conf Property map
+   * @param directory_host Directory server host name
+   * @param directory_port Directory server port number
+   * @param auto_scaling_host Auto scaling server host name
+   * @param auto_scaling_port Auto scaling server port number
+   */
   explicit fifo_queue_partition(block_memory_manager *manager,
-                               const std::string &name = "0",
-                               const std::string &metadata = "regular",
-                               const utils::property_map &conf = {},
-                               const std::string &directory_host = "localhost",
-                               int directory_port = 9091,
-                               const std::string &auto_scaling_host = "localhost",
-                               int auto_scaling_port = 9095);
+                                const std::string &name = "0",
+                                const std::string &metadata = "regular",
+                                const utils::property_map &conf = {},
+                                const std::string &directory_host = "localhost",
+                                int directory_port = 9091,
+                                const std::string &auto_scaling_host = "localhost",
+                                int auto_scaling_port = 9095);
 
   /**
    * @brief Virtual destructor
@@ -45,14 +56,14 @@ class fifo_queue_partition : public chain_module {
   bool empty() const;
 
   /**
-   * @brief Enqueue a new message to the message queue
+   * @brief Enqueue a new message to the fifo queue
    * @param message New message
    * @return Enqueue return status string
    */
   std::string enqueue(const std::string &message);
 
   /**
-   * @brief Dequeue a new message from the message queue
+   * @brief Dequeue a new message from the fifo queue
    * @return Dequeue return status string
    */
   std::string dequeue();
@@ -64,7 +75,7 @@ class fifo_queue_partition : public chain_module {
   std::string readnext();
 
   /**
-   * @brief Clear the message queue
+   * @brief Clear the fifo queue
    * @return Clear return status
    */
   std::string clear();
@@ -93,7 +104,7 @@ class fifo_queue_partition : public chain_module {
   bool is_dirty() const;
 
   /**
-   * @brief Load persistent data into the block, lock the block while doing this
+   * @brief Load persistent data into the block
    * @param path Persistent storage path
    */
 
@@ -128,12 +139,16 @@ class fifo_queue_partition : public chain_module {
   void next_target(std::vector<std::string> &target) {
     std::unique_lock<std::shared_mutex> lock(metadata_mtx_);
     next_target_string = "";
-    for(const auto &block: target) {
+    for (const auto &block: target) {
       next_target_string += (block + "!");
     }
     next_target_string.pop_back();
   }
 
+  /**
+   * @brief Set next target string
+   * @param target_str Next target string
+   */
   void next_target(const std::string &target_str) {
     std::unique_lock<std::shared_mutex> lock(metadata_mtx_);
     next_target_string = target_str;
@@ -146,7 +161,6 @@ class fifo_queue_partition : public chain_module {
     return next_target_string;
   }
 
-
  private:
 
   /**
@@ -156,7 +170,7 @@ class fifo_queue_partition : public chain_module {
 
   bool overload();
 
-  /* Message queue partition */
+  /* Fifo queue partition */
   fifo_queue_type partition_;
 
   /* Custom serializer/deserializer */

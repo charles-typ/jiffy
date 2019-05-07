@@ -54,7 +54,7 @@ bool partition::is_mutator(int i) const {
 }
 
 std::string partition::command_name(int cmd_id) {
-  if(!default_.load())
+  if (!default_.load())
     return supported_commands_[cmd_id].name;
   else return "default_partition";
 }

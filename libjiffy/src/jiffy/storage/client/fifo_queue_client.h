@@ -14,7 +14,6 @@ class fifo_queue_client : data_structure_client {
  public:
   /**
    * @brief Constructor
-   * Store all replica chain and their begin slot
    * @param fs Directory service
    * @param path Key value block path
    * @param status Data status
@@ -34,16 +33,16 @@ class fifo_queue_client : data_structure_client {
   void refresh() override;
 
   /**
-   * @brief Send message
+   * @brief Enqueue message
    * @param msg New message
-   * @return Response of the command
+   * @return Enqueue result
    */
 
   std::string enqueue(const std::string &msg);
 
   /**
-   * @brief Read message at the end position
-   * @return Response of the command
+   * @brief Dequeue message
+   * @return Dequeue result
    */
 
   std::string dequeue();

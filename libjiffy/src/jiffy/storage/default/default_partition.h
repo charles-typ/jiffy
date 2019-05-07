@@ -12,14 +12,25 @@ namespace storage {
 class default_partition : public chain_module {
  public:
 
+  /**
+   * @brief Constructor
+   * @param manager Block memory manager
+   * @param name Partition name
+   * @param metadata Partition metadata
+   * @param conf Partition property map
+   * @param directory_host Directory server host name
+   * @param directory_port Directory server port number
+   * @param auto_scaling_host Auto scaling server host name
+   * @param auto_scaling_port Auto scaling server port number
+   */
   explicit default_partition(block_memory_manager *manager,
                                const std::string &name = "default",
                                const std::string &metadata = "default",
                                const utils::property_map &conf = {},
                                const std::string &directory_host = "localhost",
-                               const int directory_port = 9091,
+                               int directory_port = 9091,
                                const std::string &auto_scaling_host = "localhost",
-                               const int auto_scaling_port = 9095);
+                               int auto_scaling_port = 9095);
 
   /**
    * @brief Virtual destructor

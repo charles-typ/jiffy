@@ -57,8 +57,6 @@ class block_response_client_map {
  private:
   /* Response client map */
   cuckoohash_map<int64_t, std::shared_ptr<block_response_client>> clients_;
-
-  std::atomic<bool> delete_;
 };
 
 }

@@ -9,7 +9,7 @@ data_structure_client::data_structure_client(std::shared_ptr<directory::director
                                              std::vector<command> OPS,
                                              int timeout_ms)
     : fs_(std::move(fs)), path_(path), status_(status), timeout_ms_(timeout_ms) {
-  (void)OPS;
+  (void) OPS;
 }
 
 directory::data_status &data_structure_client::status() {

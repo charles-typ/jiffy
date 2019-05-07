@@ -189,6 +189,11 @@ class partition {
   void set_name_and_metadata(const std::string &name, const std::string &metadata);
 
  protected:
+  /**
+   * @brief Construct binary string
+   * @param str String
+   * @return Binary string
+   */
   binary make_binary(const std::string& str);
 
   /* Metadata mutex */

@@ -9,9 +9,7 @@
 namespace jiffy {
 namespace storage {
 
-/* Replica chain client class
- * This class only considers the two most important
- * blocks in the chain(i.e. head and tail)*/
+/* Replica chain client class */
 class replica_chain_client {
  public:
   typedef block_client *client_ref;
@@ -116,8 +114,7 @@ class replica_chain_client {
   sequence_id seq_;
   /* Directory replica chain structure */
   directory::replica_chain chain_;
-  /* Block client, head of the chain
-   * Set after connection */
+  /* Block client, head of the chain */
   block_client head_;
   /* Block client, tail of the chain
    * Set after connection */

@@ -23,7 +23,6 @@ btree_partition::btree_partition(block_memory_manager *manager,
                                  const std::string &auto_scaling_host,
                                  int auto_scaling_port)
     : chain_module(manager, name, metadata, BTREE_OPS),
-    //partition_(less_type(), build_allocator<btree_pair_type>()),
       partition_(less_type()),
       splitting_(false),
       merging_(false),
@@ -453,7 +452,7 @@ void btree_partition::run_command(std::vector<std::string> &_return,
 
     } catch (std::exception &e) {
       merging_ = false;
-     // LOG(log_level::warn) << "Merge slot range failed: " << e.what();
+      // LOG(log_level::warn) << "Merge slot range failed: " << e.what();
     }
   }
 }

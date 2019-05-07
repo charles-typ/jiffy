@@ -22,9 +22,9 @@ class file_client : data_structure_client {
    */
 
   file_client(std::shared_ptr<directory::directory_interface> fs,
-                   const std::string &path,
-                   const directory::data_status &status,
-                   int timeout_ms = 1000);
+              const std::string &path,
+              const directory::data_status &status,
+              int timeout_ms = 1000);
 
   virtual ~file_client() = default;
   /**
@@ -47,22 +47,6 @@ class file_client : data_structure_client {
    */
 
   std::string read();
-
-  /**
-   * @brief Write message in batch
-   * @param msgs New messages
-   * @return Response of the commands
-   */
-
-  //std::vector<std::string> write(const std::vector<std::string> &msgs);
-
-  /**
-   * @brief Read message in batch
-   * @param num_msg Number of message to be read in batch
-   * @return Response of batch command
-   */
-
-  //std::vector<std::string> read(std::size_t num_msg);
 
  private:
 
@@ -93,9 +77,11 @@ class file_client : data_structure_client {
                         std::vector<std::string> &args,
                         std::vector<std::string> &responses) override;
 
-  /* Read start */
+  /* Read partition number */
   std::size_t read_partition_;
+  /* Read offset number in a partition */
   std::size_t read_offset_;
+  /* Write partition number */
   std::size_t write_partition_;
   /* Replica chain clients, each partition only save a replica chain client */
   std::vector<std::shared_ptr<replica_chain_client>> blocks_;

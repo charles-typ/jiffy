@@ -67,7 +67,7 @@ std::string btree_client::get(const std::string &key) {
       //auto stop3 =  std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
       //LOG(log_level::info) << "handling redirect " << stop3 - start3;
       //if(stop3 - start3 > 20)
-    //    std::cout << "2 " << stop3 - start3 << std::endl;
+      //    std::cout << "2 " << stop3 - start3 << std::endl;
       redo = false;
       redo_times = 0;
     } catch (redo_error &e) {
@@ -77,7 +77,7 @@ std::string btree_client::get(const std::string &key) {
   //auto stop1 =  std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
   //LOG(log_level::info) << "Takes time for client:: " << stop1 - start1;
   //if(stop1 - start1 > 20)
-    //std::cout << "3 " << stop1 - start1 << std::endl;
+  //std::cout << "3 " << stop1 - start1 << std::endl;
   return _return;
 }
 

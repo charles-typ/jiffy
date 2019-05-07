@@ -145,10 +145,9 @@ class hash_table_client : public data_structure_client {
                         std::vector<std::string> &args,
                         std::vector<std::string> &responses) override;
 
-
-
   /* Redo times */
   std::size_t redo_times = 0;
+  /* Map from slot begin to replica chain client pointer */
   std::map<int32_t, std::shared_ptr<replica_chain_client>> blocks_;
 };
 
