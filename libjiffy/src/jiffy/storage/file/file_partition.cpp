@@ -164,7 +164,7 @@ void file_partition::run_command(std::vector<std::string> &_return,
       scale->auto_scaling(chain(), path(), scale_conf);
     } catch (std::exception &e) {
       overload_ = false;
-      LOG(log_level::warn) << "Adding new message queue partition failed: " << e.what();
+      LOG(log_level::warn) << "Adding new file partition failed: " << e.what();
     }
   }
 }

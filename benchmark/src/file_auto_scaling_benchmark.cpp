@@ -77,7 +77,7 @@ int main() {
     while (!stop2_.load()) {
       for (size_t k = 0; k < num_ops; ++k) {
         read_t0 = time_utils::now_us();
-        file_client_2->read();
+        file_client_2->read(data_size);
         read_t1 = time_utils::now_us();
         read_tot_time = (read_t1 - read_t0);
         auto cur_epoch = ts::duration_cast<ts::milliseconds>(ts::system_clock::now().time_since_epoch()).count();

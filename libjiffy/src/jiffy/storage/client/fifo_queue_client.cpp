@@ -91,7 +91,7 @@ std::size_t fifo_queue_client::block_id(const fifo_queue_cmd_id &op) {
     case fifo_queue_cmd_id::fq_readnext:
       return read_partition_;
     default:
-      throw std::invalid_argument("Incorrect operation of message queue");
+      throw std::invalid_argument("Incorrect operation of fifo queue");
   }
 }
 

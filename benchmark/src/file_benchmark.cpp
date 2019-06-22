@@ -106,7 +106,7 @@ class read_benchmark : public file_benchmark {
         size_t j;
         for (j = 0; j < num_ops_; ++j) {
           t0 = time_utils::now_us();
-          clients_[i]->read();
+          clients_[i]->read(data_.size());
           t1 = time_utils::now_us();
           tot_time += (t1 - t0);
         }
@@ -144,7 +144,6 @@ int main() {
   LOG(log_level::info) << "backing-path: " << backing_path;
 
   for (const auto &op_type:op_type_set) {
-
     for (int i = 1; i <= 64; i *= 2) {
       int num_clients = i;
 

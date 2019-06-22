@@ -184,7 +184,7 @@ void fifo_queue_partition::run_command(std::vector<std::string> &_return,
       scale->auto_scaling(chain(), path(), scale_conf);
     } catch (std::exception &e) {
       overload_ = false;
-      LOG(log_level::warn) << "Adding new message queue partition failed: " << e.what();
+      LOG(log_level::warn) << "Adding new fifo queue partition failed: " << e.what();
     }
   }
   expected = false;
@@ -203,7 +203,7 @@ void fifo_queue_partition::run_command(std::vector<std::string> &_return,
       scale->auto_scaling(chain(), path(), scale_conf);
     } catch (std::exception &e) {
       underload_ = false;
-      LOG(log_level::warn) << "Adding new message queue partition failed: " << e.what();
+      LOG(log_level::warn) << "Removing fifo queue partition failed: " << e.what();
     }
   }
 }

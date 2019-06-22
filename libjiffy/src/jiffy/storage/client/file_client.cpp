@@ -108,7 +108,7 @@ std::size_t file_client::block_id(const file_cmd_id &op) {
       } else {
         return write_partition_;
       }
-    default:throw std::invalid_argument("Incorrect operation of message queue");
+    default:throw std::invalid_argument("Incorrect operation of file");
   }
 }
 

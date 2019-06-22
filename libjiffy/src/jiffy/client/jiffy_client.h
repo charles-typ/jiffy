@@ -84,7 +84,7 @@ class jiffy_client {
   /**
    * @brief Open file, begin lease
    * @param path File path
-   * @return Message queue client
+   * @return File client
    */
 
   std::shared_ptr<storage::file_client> open_file(const std::string &path);
