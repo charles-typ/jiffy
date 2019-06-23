@@ -22,8 +22,7 @@ file_partition::file_partition(block_memory_manager *manager,
                                int directory_port,
                                const std::string &auto_scaling_host,
                                int auto_scaling_port)
-    : data_structure_partition(manager, name, metadata, conf, directory_host, directory_port, auto_scaling_host, auto_scaling_port, FILE_OPS),
-      partition_(manager->mb_capacity(), build_allocator<char>()) {
+    : data_structure_partition<file_type, char>(manager, name, metadata, directory_host, directory_port, auto_scaling_host, auto_scaling_port, FILE_OPS, manager->mb_capacity()) {
   auto ser = conf.get("file.serializer", "csv");
   if (ser == "binary") {
     ser_ = std::make_shared<csv_serde>(binary_allocator_);
@@ -159,55 +158,6 @@ void file_partition::run_command(std::vector<std::string> &_return,
       LOG(log_level::warn) << "Adding new file partition failed: " << e.what();
     }
   }
-}
-
-std::size_t file_partition::size() const {
-  return partition_.size();
-}
-
-bool file_partition::empty() const {
-  return partition_.empty();
-}
-
-bool file_partition::is_dirty() const {
-  return dirty_;
-}
-
-void file_partition::load(const std::string &path) {
-  auto remote = persistent::persistent_store::instance(path, ser_);
-  auto decomposed = persistent::persistent_store::decompose_path(path);
-  remote->read<file_type>(decomposed.second, partition_);
-}
-
-bool file_partition::sync(const std::string &path) {
-  if (dirty_) {
-    auto remote = persistent::persistent_store::instance(path, ser_);
-    auto decomposed = persistent::persistent_store::decompose_path(path);
-    remote->write<file_type>(partition_, decomposed.second);
-    dirty_ = false;
-    return true;
-  }
-  return false;
-}
-
-bool file_partition::dump(const std::string &path) {
-  std::unique_lock<std::shared_mutex> lock(metadata_mtx_);
-  bool flushed = false;
-  if (dirty_) {
-    auto remote = persistent::persistent_store::instance(path, ser_);
-    auto decomposed = persistent::persistent_store::decompose_path(path);
-    remote->write<file_type>(partition_, decomposed.second);
-    flushed = true;
-  }
-  partition_.clear();
-  next_->reset("nil");
-  path_ = "";
-  sub_map_.clear();
-  chain_ = {};
-  role_ = singleton;
-  overload_ = false;
-  dirty_ = false;
-  return flushed;
 }
 
 void file_partition::forward_all() {

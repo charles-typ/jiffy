@@ -16,7 +16,7 @@ using namespace utils;
 data_structure_partition::data_structure_partition(block_memory_manager *manager,
                                      const std::string &name,
                                      const std::string &metadata,
-                                     const utils::property_map &conf,
+                                     const utils::property_map &,
                                      const std::string &directory_host,
                                      int directory_port,
                                      const std::string &auto_scaling_host,

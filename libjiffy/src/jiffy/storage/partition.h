@@ -48,6 +48,14 @@ class partition {
   }
 
   /**
+   * @brief Virtual function for running a command on a block 
+   * @param _return Return value 
+   * @param cmd_id Operation identifier 
+   * @param args Operation arguments 
+   */ 
+  virtual void run_command(std::vector<std::string> &_return, int32_t cmd_id, const std::vector<std::string> &args) = 0;
+  
+  /**
    * @brief Set block path
    * @param path Block path
    */

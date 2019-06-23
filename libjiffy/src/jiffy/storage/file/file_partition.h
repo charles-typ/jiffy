@@ -13,7 +13,7 @@
 namespace jiffy {
 namespace storage {
 
-class file_partition : public data_structure_partition {
+class file_partition : public data_structure_partition<file_type, char> {
  public:
 
   /**
@@ -40,20 +40,6 @@ class file_partition : public data_structure_partition {
    * @brief Virtual destructor
    */
   virtual ~file_partition() = default;
-
-  /**
-   * @brief Fetch block size
-   * @return Block size
-   */
-
-  std::size_t size() const;
-
-  /**
-   * @brief Check if block is empty
-   * @return Bool value, true if empty
-   */
-
-  bool empty() const;
 
   /**
    * @brief Write to the file
@@ -99,36 +85,6 @@ class file_partition : public data_structure_partition {
   void run_command(std::vector<std::string> &_return, int cmd_id, const std::vector<std::string> &args) override;
 
   /**
-   * @brief Atomically check dirty bit
-   * @return Bool value, true if block is dirty
-   */
-
-  bool is_dirty() const;
-
-  /**
-   * @brief Load persistent data into the block
-   * @param path Persistent storage path
-   */
-
-  void load(const std::string &path) override;
-
-  /**
-   * @brief If dirty, synchronize persistent storage and block
-   * @param path Persistent storage path
-   * @return Bool value, true if block successfully synchronized
-   */
-
-  bool sync(const std::string &path) override;
-
-  /**
-   * @brief Flush the block if dirty and clear the block
-   * @param path Persistent storage path
-   * @return Bool value, true if block successfully dumped
-   */
-
-  bool dump(const std::string &path) override;
-
-  /**
    * @brief Send all key and value to the next block
    */
 
@@ -165,10 +121,6 @@ class file_partition : public data_structure_partition {
   }
 
  private:
-
-  /* File partition */
-  file_type partition_;
-
   /* Next partition target string */
   std::string next_target_string;
 
