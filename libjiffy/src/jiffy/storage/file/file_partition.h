@@ -6,14 +6,14 @@
 #include "../serde/serde_all.h"
 #include "jiffy/storage/partition.h"
 #include "jiffy/persistent/persistent_service.h"
-#include "jiffy/storage/chain_module.h"
+#include "jiffy/storage/data_structure_partition.h"
 #include "file_defs.h"
 #include "jiffy/directory/directory_ops.h"
 
 namespace jiffy {
 namespace storage {
 
-class file_partition : public chain_module {
+class file_partition : public data_structure_partition {
  public:
 
   /**
@@ -166,41 +166,8 @@ class file_partition : public chain_module {
 
  private:
 
-  /**
-   * @brief Check if block is overloaded
-   * @return Bool value, true if block size is over the high threshold capacity
-   */
-
-  bool overload();
-
   /* File partition */
   file_type partition_;
-
-  /* Custom serializer/deserializer */
-  std::shared_ptr<serde> ser_;
-
-  /* High threshold */
-  double threshold_hi_;
-
-  /* Bool for partition slot range splitting */
-  bool overload_;
-
-  /* Partition dirty bit */
-  bool dirty_;
-
-  /* Bool value for auto scaling */
-  bool auto_scale_;
-
-  /* Directory server hostname */
-  std::string directory_host_;
-
-  /* Directory server port number */
-  int directory_port_;
-
-  /* Auto scaling server hostname */
-  std::string auto_scaling_host_;
-  /* Auto scaling server port number */
-  int auto_scaling_port_;
 
   /* Next partition target string */
   std::string next_target_string;

@@ -6,14 +6,14 @@
 #include "../serde/serde_all.h"
 #include "jiffy/storage/partition.h"
 #include "jiffy/persistent/persistent_service.h"
-#include "jiffy/storage/chain_module.h"
+#include "jiffy/storage/data_structure_partition.h"
 #include "fifo_queue_defs.h"
 #include "jiffy/directory/directory_ops.h"
 
 namespace jiffy {
 namespace storage {
 /* Fifo queue partition class */
-class fifo_queue_partition : public chain_module {
+class fifo_queue_partition : public data_structure_partition {
  public:
 
   /**
@@ -138,7 +138,6 @@ class fifo_queue_partition : public chain_module {
    * @param block_ids Next target replica chain data blocks
    */
   void next_target(std::vector<std::string> &target) {
-    std::unique_lock<std::shared_mutex> lock(metadata_mtx_);
     next_target_string = "";
     for (const auto &block: target) {
       next_target_string += (block + "!");
@@ -151,7 +150,6 @@ class fifo_queue_partition : public chain_module {
    * @param target_str Next target string
    */
   void next_target(const std::string &target_str) {
-    std::unique_lock<std::shared_mutex> lock(metadata_mtx_);
     next_target_string = target_str;
   }
   /**
@@ -164,48 +162,11 @@ class fifo_queue_partition : public chain_module {
 
  private:
 
-  /**
-   * @brief Check if block is overloaded
-   * @return Bool value, true if block size is over the high threshold capacity
-   */
-
-  bool overload();
-
   /* Fifo queue partition */
   fifo_queue_type partition_;
 
-  /* Custom serializer/deserializer */
-  std::shared_ptr<serde> ser_;
-
-  /* High threshold */
-  double threshold_hi_;
-
-  /* Bool for overload partition */
-  bool overload_;
-
-  /* Bool for underload partition */
-  bool underload_;
-
   /* Bool for new block available, this bool basically prevents the fifo queue to erase all the blocks when size = 0 */
   bool new_block_available_;
-
-  /* Partition dirty bit */
-  bool dirty_;
-
-  /* Bool value for auto scaling */
-  bool auto_scale_;
-
-  /* Directory server hostname */
-  std::string directory_host_;
-
-  /* Directory server port number */
-  int directory_port_;
-
-  /* Auto scaling server hostname */
-  std::string auto_scaling_host_;
-  
-  /* Auto scaling server port number */
-  int auto_scaling_port_;
 
   /* Next partition target string */
   std::string next_target_string;

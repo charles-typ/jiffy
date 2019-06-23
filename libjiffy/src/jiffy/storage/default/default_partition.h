@@ -4,12 +4,12 @@
 #include <string>
 #include <jiffy/utils/property_map.h>
 #include "jiffy/storage/partition.h"
-#include "jiffy/storage/chain_module.h"
+#include "jiffy/storage/data_structure_partition.h"
 
 namespace jiffy {
 namespace storage {
 
-class default_partition : public chain_module {
+class default_partition : public data_structure_partition {
  public:
 
   /**

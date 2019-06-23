@@ -22,18 +22,9 @@ fifo_queue_partition::fifo_queue_partition(block_memory_manager *manager,
                                            int directory_port,
                                            const std::string &auto_scaling_host,
                                            int auto_scaling_port)
-    : chain_module(manager, name, metadata, FIFO_QUEUE_OPS),
+    : data_structure_partition(manager, name, metadata, conf, directory_host, directory_port, auto_scaling_host, auto_scaling_port, FIFO_QUEUE_OPS),
       partition_(manager->mb_capacity(), build_allocator<char>()),
-      overload_(false),
-      underload_(false),
-      new_block_available_(false),
-      dirty_(false),
-      directory_host_(directory_host),
-      directory_port_(directory_port),
-      auto_scaling_host_(auto_scaling_host),
-      auto_scaling_port_(auto_scaling_port) {
-  (void) directory_host_;
-  (void) directory_port_;
+      new_block_available_(false) {
   auto ser = conf.get("fifoqueue.serializer", "csv");
   if (ser == "binary") {
     ser_ = std::make_shared<csv_serde>(binary_allocator_);
@@ -264,10 +255,6 @@ void fifo_queue_partition::forward_all() {
     run_command_on_next(result, fifo_queue_cmd_id::fq_enqueue, {*it});
     ++i;
   }
-}
-
-bool fifo_queue_partition::overload() {
-  return partition_.size() >= static_cast<size_t>(static_cast<double>(partition_.capacity()) * threshold_hi_);
 }
 
 REGISTER_IMPLEMENTATION("fifoqueue", fifo_queue_partition);

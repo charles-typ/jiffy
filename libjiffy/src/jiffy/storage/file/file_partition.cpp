@@ -22,16 +22,8 @@ file_partition::file_partition(block_memory_manager *manager,
                                int directory_port,
                                const std::string &auto_scaling_host,
                                int auto_scaling_port)
-    : chain_module(manager, name, metadata, FILE_OPS),
-      partition_(manager->mb_capacity(), build_allocator<char>()),
-      overload_(false),
-      dirty_(false),
-      directory_host_(directory_host),
-      directory_port_(directory_port),
-      auto_scaling_host_(auto_scaling_host),
-      auto_scaling_port_(auto_scaling_port) {
-  (void) directory_host_;
-  (void) directory_port_;
+    : data_structure_partition(manager, name, metadata, conf, directory_host, directory_port, auto_scaling_host, auto_scaling_port, FILE_OPS),
+      partition_(manager->mb_capacity(), build_allocator<char>()) {
   auto ser = conf.get("file.serializer", "csv");
   if (ser == "binary") {
     ser_ = std::make_shared<csv_serde>(binary_allocator_);
@@ -221,10 +213,6 @@ bool file_partition::dump(const std::string &path) {
 void file_partition::forward_all() {
   std::vector<std::string> result;
   run_command_on_next(result, file_cmd_id::file_write, {std::string(partition_.data(), partition_.size())});
-}
-
-bool file_partition::overload() {
-  return partition_.size() >= static_cast<size_t>(static_cast<double>(partition_.capacity()) * threshold_hi_);
 }
 
 REGISTER_IMPLEMENTATION("file", file_partition);

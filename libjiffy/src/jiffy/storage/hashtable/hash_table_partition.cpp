@@ -22,17 +22,10 @@ hash_table_partition::hash_table_partition(block_memory_manager *manager,
                                            int directory_port,
                                            const std::string &auto_scaling_host,
                                            int auto_scaling_port)
-    : chain_module(manager, name, metadata, KV_OPS),
+    : data_structure_partition(manager, name, metadata, conf, directory_host, directory_port, auto_scaling_host, auto_scaling_port, KV_OPS),
       block_(HASH_TABLE_DEFAULT_SIZE, hash_type(), equal_type()),
-      splitting_(false),
-      merging_(false),
-      dirty_(false),
       export_slot_range_(0, -1),
-      import_slot_range_(0, -1),
-      directory_host_(directory_host),
-      directory_port_(directory_port),
-      auto_scaling_host_(auto_scaling_host),
-      auto_scaling_port_(auto_scaling_port) {
+      import_slot_range_(0, -1) {
   auto ser = conf.get("hashtable.serializer", "csv");
   if (ser == "binary") {
     ser_ = std::make_shared<binary_serde>(binary_allocator_);
@@ -230,8 +223,8 @@ std::string hash_table_partition::update_partition(const std::string &new_name, 
         fs->remove_block(path(), s[1]);
       }
     } else {
-      splitting_ = false;
-      merging_ = false;
+      overload_ = false;
+      underload_ = false;
     }
     export_slot_range(0, -1);
     import_slot_range(0, -1);
@@ -361,12 +354,12 @@ void hash_table_partition::run_command(std::vector<std::string> &_return,
     dirty_ = true;
   }
   if (auto_scale_ && is_mutator(cmd_id) && overload() && metadata_ != "exporting"
-      && metadata_ != "importing" && is_tail() && !splitting_ && merging_ == false) {
+      && metadata_ != "importing" && is_tail() && !overload_ && underload_ == false) {
     LOG(log_level::info) << "Overloaded partition; storage = " << storage_size() << " capacity = "
                          << storage_capacity()
                          << " slot range = (" << slot_begin() << ", " << slot_end() << ")";
     try {
-      splitting_ = true;
+      overload_ = true;
       std::map<std::string, std::string> scale_conf;
       scale_conf.emplace(std::make_pair(std::string("slot_range_begin"), std::to_string(slot_range_.first)));
       scale_conf.emplace(std::make_pair(std::string("slot_range_end"), std::to_string(slot_range_.second)));
@@ -374,25 +367,25 @@ void hash_table_partition::run_command(std::vector<std::string> &_return,
       auto scale = std::make_shared<auto_scaling::auto_scaling_client>(auto_scaling_host_, auto_scaling_port_);
       scale->auto_scaling(chain(), path(), scale_conf);
     } catch (std::exception &e) {
-      splitting_ = false;
+      overload_ = false;
       LOG(log_level::warn) << "Split slot range failed: " << e.what();
     }
   }
   if (auto_scale_ && cmd_id == hash_table_cmd_id::ht_remove && underload()
       && metadata_ != "exporting"
       && metadata_ != "importing" && name() != "0_65536" && is_tail()
-      && !merging_ && splitting_ == false) {
+      && !underload_ && overload_ == false) {
     LOG(log_level::info) << "Underloaded partition; storage = " << storage_size() << " capacity = "
                          << storage_capacity() << " slot range = (" << slot_begin() << ", " << slot_end() << ")";
     try {
-      merging_ = true;
+      underload_ = true;
       std::map<std::string, std::string> scale_conf;
       scale_conf.emplace(std::make_pair(std::string("type"), std::string("hash_table_merge")));
       scale_conf.emplace(std::make_pair(std::string("storage_capacity"), std::to_string(storage_capacity())));
       auto scale = std::make_shared<auto_scaling::auto_scaling_client>(auto_scaling_host_, auto_scaling_port_);
       scale->auto_scaling(chain(), path(), scale_conf);
     } catch (std::exception &e) {
-      merging_ = false;
+      underload_ = false;
       LOG(log_level::warn) << "Merge slot range failed: " << e.what();
     }
   }
@@ -451,8 +444,8 @@ bool hash_table_partition::dump(const std::string &path) {
   state_ = hash_partition_state::regular;
   chain_ = {};
   role_ = singleton;
-  splitting_ = false;
-  merging_ = false;
+  overload_ = false;
+  underload_ = false;
   dirty_ = false;
   return flushed;
 }
@@ -466,14 +459,6 @@ void hash_table_partition::forward_all() {
     ++i;
   }
   ltable.unlock();
-}
-
-bool hash_table_partition::overload() {
-  return storage_size() > static_cast<size_t>(static_cast<double>(storage_capacity()) * threshold_hi_);
-}
-
-bool hash_table_partition::underload() {
-  return storage_size() < static_cast<size_t>(static_cast<double>(storage_capacity()) * threshold_lo_);
 }
 
 REGISTER_IMPLEMENTATION("hashtable", hash_table_partition);

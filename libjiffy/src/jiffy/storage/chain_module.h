@@ -381,12 +381,6 @@ class chain_module : public partition {
   void resend_pending();
 
   /**
-   * @brief Virtual function for forwarding all
-   */
-
-  virtual void forward_all() = 0;
-
-  /**
    * @brief Request for the first time
    * @param seq Sequence identifier
    * @param oid Operation identifier
