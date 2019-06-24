@@ -13,7 +13,7 @@
 namespace jiffy {
 namespace storage {
 /* Fifo queue partition class */
-class fifo_queue_partition : public data_structure_partition {
+class fifo_queue_partition : public data_structure_partition<fifo_queue_type, size_t, block_memory_allocator<char>> {
  public:
 
   /**
@@ -41,19 +41,7 @@ class fifo_queue_partition : public data_structure_partition {
    */
   virtual ~fifo_queue_partition() = default;
 
-  /**
-   * @brief Fetch block size
-   * @return Block size
-   */
 
-  std::size_t size() const;
-
-  /**
-   * @brief Check if block is empty
-   * @return Bool value, true if empty
-   */
-
-  bool empty() const;
 
   /**
    * @brief Enqueue a new message to the fifo queue
@@ -97,36 +85,7 @@ class fifo_queue_partition : public data_structure_partition {
 
   void run_command(std::vector<std::string> &_return, int cmd_id, const std::vector<std::string> &args) override;
 
-  /**
-   * @brief Atomically check dirty bit
-   * @return Bool value, true if block is dirty
-   */
-
-  bool is_dirty() const;
-
-  /**
-   * @brief Load persistent data into the block
-   * @param path Persistent storage path
-   */
-
-  void load(const std::string &path) override;
-
-  /**
-   * @brief If dirty, synchronize persistent storage and block
-   * @param path Persistent storage path
-   * @return Bool value, true if block successfully synchronized
-   */
-
-  bool sync(const std::string &path) override;
-
-  /**
-   * @brief Flush the block if dirty and clear the block
-   * @param path Persistent storage path
-   * @return Bool value, true if block successfully dumped
-   */
-
-  bool dump(const std::string &path) override;
-
+  void clear_all() override;
   /**
    * @brief Send all key and value to the next block
    */
@@ -161,9 +120,6 @@ class fifo_queue_partition : public data_structure_partition {
   }
 
  private:
-
-  /* Fifo queue partition */
-  fifo_queue_type partition_;
 
   /* Bool for new block available, this bool basically prevents the fifo queue to erase all the blocks when size = 0 */
   bool new_block_available_;

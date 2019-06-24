@@ -22,8 +22,8 @@ hash_table_partition::hash_table_partition(block_memory_manager *manager,
                                            int directory_port,
                                            const std::string &auto_scaling_host,
                                            int auto_scaling_port)
-    : data_structure_partition(manager, name, metadata, conf, directory_host, directory_port, auto_scaling_host, auto_scaling_port, KV_OPS),
-      block_(HASH_TABLE_DEFAULT_SIZE, hash_type(), equal_type()),
+    : data_structure_partition<hash_table_type, size_t, hash_type, equal_type>(manager, name, metadata, directory_host, directory_port, auto_scaling_host, auto_scaling_port, KV_OPS, HASH_TABLE_DEFAULT_SIZE, hash_type(), equal_type()),
+      partition_(HASH_TABLE_DEFAULT_SIZE, hash_type(), equal_type()),
       export_slot_range_(0, -1),
       import_slot_range_(0, -1) {
   auto ser = conf.get("hashtable.serializer", "csv");
@@ -51,7 +51,7 @@ std::string hash_table_partition::put(const std::string &key, const std::string 
       return "!full";
     }
 
-    if (block_.insert(make_binary(key), make_binary(value))) {
+    if (partition_.insert(make_binary(key), make_binary(value))) {
       return "!ok";
     } else {
       return "!duplicate_key";
@@ -66,7 +66,7 @@ std::string hash_table_partition::upsert(const std::string &key, const std::stri
     if (metadata_ == "exporting" && in_export_slot_range(hash)) {
       return "!exporting!" + export_target_str();
     }
-    block_.upsert(make_binary(key), [&](value_type &v) {
+    partition_.upsert(make_binary(key), [&](value_type &v) {
       v = make_binary(value);
     }, value, binary_allocator_);
     return "!ok";
@@ -77,7 +77,7 @@ std::string hash_table_partition::upsert(const std::string &key, const std::stri
 std::string hash_table_partition::exists(const std::string &key, bool redirect) {
   auto hash = hash_slot::get(key);
   if (in_slot_range(hash) || (in_import_slot_range(hash) && redirect)) {
-    if (block_.contains(key)) {
+    if (partition_.contains(key)) {
       return "true";
     }
     if (metadata_ == "exporting" && in_export_slot_range(hash)) {
@@ -95,7 +95,7 @@ std::string hash_table_partition::get(const std::string &key, bool redirect) {
   auto hash = hash_slot::get(key);
   if (in_slot_range(hash) || (in_import_slot_range(hash) && redirect)) {
     try {
-      return to_string(block_.find(key));
+      return to_string(partition_.find(key));
     } catch (std::out_of_range &e) {
       if (metadata_ == "exporting" && in_export_slot_range(hash)) {
         return "!exporting!" + export_target_str();
@@ -113,7 +113,7 @@ std::string hash_table_partition::update(const std::string &key, const std::stri
       return "!exporting!" + export_target_str();
     }
     std::string old_val;
-    if (block_.update_fn(key, [&](value_type &v) {
+    if (partition_.update_fn(key, [&](value_type &v) {
       old_val = to_string(v);
       v = make_binary(value);
     })) {
@@ -134,7 +134,7 @@ std::string hash_table_partition::remove(const std::string &key, bool redirect) 
       return "!exporting!" + export_target_str();
     }
     std::string old_val;
-    if (block_.erase_fn(key, [&](value_type &value) {
+    if (partition_.erase_fn(key, [&](value_type &value) {
       old_val = to_string(value);
       return true;
     })) {
@@ -152,7 +152,7 @@ std::string hash_table_partition::scale_remove(const std::string &key) {
   auto hash = hash_slot::get(key);
   if (in_slot_range(hash)) {
     std::string old_val;
-    if (block_.erase_fn(key, [&](value_type &value) {
+    if (partition_.erase_fn(key, [&](value_type &value) {
       old_val = to_string(value);
       return true;
     })) {
@@ -165,7 +165,7 @@ std::string hash_table_partition::scale_remove(const std::string &key) {
 }
 
 void hash_table_partition::keys(std::vector<std::string> &keys) { // Remove this operation
-  for (const auto &entry: block_.lock_table()) {
+  for (const auto &entry: partition_.lock_table()) {
     keys.push_back(to_string(entry.first));
   }
 }
@@ -174,11 +174,11 @@ void hash_table_partition::get_data_in_slot_range(std::vector<std::string> &data
                                                   int32_t slot_begin,
                                                   int32_t slot_end,
                                                   int32_t batch_size) {
-  if (block_.empty()) {
+  if (partition_.empty()) {
     return;
   }
   std::size_t n_items = 0;
-  for (const auto &entry: block_.lock_table()) {
+  for (const auto &entry: partition_.lock_table()) {
     auto slot = hash_slot::get(entry.first);
     if (slot >= slot_begin && slot < slot_end) {
       data.push_back(to_string(entry.first));
@@ -391,67 +391,29 @@ void hash_table_partition::run_command(std::vector<std::string> &_return,
   }
 }
 
-std::size_t hash_table_partition::size() const {
-  return block_.size();
+std::string hash_table_partition::clear() {
+  partition_.clear();
+  slot_range_.first = 0;
+  slot_range_.second = -1;
+  overload_ = false;
+  return "!ok";
 }
-
-bool hash_table_partition::empty() const {
-  return block_.empty();
-}
-
-bool hash_table_partition::is_dirty() const {
-  return dirty_;
-}
-
-void hash_table_partition::load(const std::string &path) {
-  locked_hash_table_type ltable = block_.lock_table();
-  auto remote = persistent::persistent_store::instance(path, ser_);
-  auto decomposed = persistent::persistent_store::decompose_path(path);
-  remote->read<locked_hash_table_type>(decomposed.second, ltable);
-  ltable.unlock();
-}
-
-bool hash_table_partition::sync(const std::string &path) {
-  if (dirty_) {
-    locked_hash_table_type ltable = block_.lock_table();
-    auto remote = persistent::persistent_store::instance(path, ser_);
-    auto decomposed = persistent::persistent_store::decompose_path(path);
-    remote->write<locked_hash_table_type>(ltable, decomposed.second);
-    ltable.unlock();
-    dirty_ = false;
-    return true;
-  }
-  return false;
-}
-
-bool hash_table_partition::dump(const std::string &path) {
-  std::unique_lock<std::shared_mutex> lock(metadata_mtx_);
-  bool flushed = false;
-  if (dirty_) {
-    locked_hash_table_type ltable = block_.lock_table();
-    auto remote = persistent::persistent_store::instance(path, ser_);
-    auto decomposed = persistent::persistent_store::decompose_path(path);
-    remote->write<locked_hash_table_type>(ltable, decomposed.second);
-    ltable.unlock();
-    flushed = true;
-  }
-  block_.clear();
+void hash_table_partition::clear_all() {
+  partition_.clear();
   next_->reset("nil");
   path_ = "";
   sub_map_.clear();
   slot_range_.first = 0;
   slot_range_.second = -1;
-  state_ = hash_partition_state::regular;
   chain_ = {};
   role_ = singleton;
   overload_ = false;
   underload_ = false;
   dirty_ = false;
-  return flushed;
 }
 
 void hash_table_partition::forward_all() {
-  locked_hash_table_type ltable = block_.lock_table();
+  locked_hash_table_type ltable = partition_.lock_table();
   int64_t i = 0;
   for (const auto &entry: ltable) {
     std::vector<std::string> result;

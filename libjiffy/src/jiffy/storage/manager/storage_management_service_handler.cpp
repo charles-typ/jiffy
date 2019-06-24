@@ -102,7 +102,7 @@ void storage_management_service_handler::resend_pending(const int32_t block_id) 
 
 void storage_management_service_handler::forward_all(const int32_t block_id) {
   try {
-    blocks_.at(static_cast<std::size_t>(block_id))->impl()->forward_all();
+    //blocks_.at(static_cast<std::size_t>(block_id))->impl()->forward_all();
   } catch (std::exception &e) {
     throw make_exception(e);
   }

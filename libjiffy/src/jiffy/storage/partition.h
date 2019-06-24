@@ -54,7 +54,7 @@ class partition {
    * @param args Operation arguments 
    */ 
   virtual void run_command(std::vector<std::string> &_return, int32_t cmd_id, const std::vector<std::string> &args) = 0;
-  
+
   /**
    * @brief Set block path
    * @param path Block path
@@ -119,6 +119,24 @@ class partition {
 
   std::string command_name(int cmd_id);
 
+  virtual void load(const std::string &path) = 0;
+  /**
+   * @brief Synchronize partition with persistent store.
+   * @param path Persistent store path to write to.
+   * @return True if data was written, false otherwise.
+   */
+
+  virtual bool sync(const std::string &path) = 0;
+
+  /**
+   * @brief Dump partition data to persistent store.
+   * @param path Persistent store path to write to.
+   * @return True if data was written, false otherwise.
+   */
+
+  virtual bool dump(const std::string &path) = 0;
+
+
   /**
    * @brief Get the storage capacity of the partition.
    * @return The storage capacity of the partition.
@@ -130,6 +148,22 @@ class partition {
    * @return The storage capacity utilized by the partition.
    */
   std::size_t storage_size();
+
+  /**
+   * @brief Check if block is overloaded
+   * @return Bool value, true if block size is over the high threshold capacity
+   */
+  bool overload() {
+    return storage_size() > static_cast<size_t>(static_cast<double>(storage_capacity()) * threshold_hi_);
+  }
+
+  /**
+   * @brief Check if block is underloaded
+   * @return Bool value, true if block size is under the low threshold capacity
+   */
+  bool underload() {
+    return storage_size() < static_cast<size_t>(static_cast<double>(storage_capacity()) * threshold_lo_);
+  }
 
   /**
    * @brief Build STL compliant allocator with memory managed by block memory manager.
@@ -190,6 +224,10 @@ class partition {
   allocator<uint8_t> binary_allocator_;
   /* Atomic bool to indicate that the partition is a default one */
   std::atomic<bool> default_;
+  /* Low threshold */
+  double threshold_lo_;
+  /* High threshold */
+  double threshold_hi_;
 };
 
 }

@@ -7,24 +7,16 @@
 #include "jiffy/storage/partition.h"
 #include "jiffy/persistent/persistent_service.h"
 #include "jiffy/storage/data_structure_partition.h"
+#include "jiffy/storage/chain_module.h"
 #include "jiffy/storage/hashtable/hash_table_ops.h"
 #include "hash_table_defs.h"
 
 namespace jiffy {
 namespace storage {
 
-/**
- * Hash partition state
- */
-
-enum hash_partition_state {
-  regular = 0,
-  importing = 1,
-  exporting = 2
-};
 
 /* Key value partition structure class, inherited from chain module */
-class hash_table_partition : public data_structure_partition {
+class hash_table_partition : public data_structure_partition<hash_table_type, size_t, hash_type, equal_type> {
  public:
   /**
    * @brief Constructor
@@ -107,25 +99,6 @@ class hash_table_partition : public data_structure_partition {
     return slot >= slot_range_.first && slot < slot_range_.second;
   }
 
-  /**
-   * @brief Set block state
-   * @param state Block state
-   */
-
-  void state(hash_partition_state state) {
-    std::unique_lock<std::shared_mutex> lock(metadata_mtx_);
-    state_ = state;
-  }
-
-  /**
-   * @brief Fetch block state
-   * @return Block state
-   */
-
-  const hash_partition_state &state() const {
-    std::shared_lock<std::shared_mutex> lock(metadata_mtx_);
-    return state_;
-  }
 
   /**
    * @brief Set export slot range
@@ -331,20 +304,6 @@ class hash_table_partition : public data_structure_partition {
                               int32_t batch_size);
 
   /**
-   * @brief Fetch block size
-   * @return Block size
-   */
-
-  std::size_t size() const;
-
-  /**
-   * @brief Check if block is empty
-   * @return Bool value, true if empty
-   */
-
-  bool empty() const;
-
-  /**
    * @brief Update partition name and metadata
    * @param new_name New partition name
    * @param new_metadata New partition metadata
@@ -375,36 +334,6 @@ class hash_table_partition : public data_structure_partition {
   void run_command(std::vector<std::string> &_return, int cmd_id, const std::vector<std::string> &args) override;
 
   /**
-   * @brief Atomically check dirty bit
-   * @return Bool value, true if block is dirty
-   */
-
-  bool is_dirty() const;
-
-  /**
-   * @brief Load persistent data into the block, lock the block while doing this
-   * @param path Persistent storage path
-   */
-
-  void load(const std::string &path) override;
-
-  /**
-   * @brief If dirty, synchronize persistent storage and block
-   * @param path Persistent storage path
-   * @return Bool value, true if block successfully synchronized
-   */
-
-  bool sync(const std::string &path) override;
-
-  /**
-   * @brief Flush the block if dirty and clear the block
-   * @param path Persistent storage path
-   * @return Bool value, true if block successfully dumped
-   */
-
-  bool dump(const std::string &path) override;
-
-  /**
    * @brief Send all key and value to the next block
    */
 
@@ -429,12 +358,14 @@ class hash_table_partition : public data_structure_partition {
     export_slot_range_.second = slot_end;
   }
 
+
+  std::string clear() override;
+  void clear_all() override;
+
  private:
 
   /* Cuckoo hash map partition */
-  hash_table_type block_;
-  /* Block state, regular, importing or exporting */
-  hash_partition_state state_;
+  hash_table_type partition_;
   /* Hash slot range */
   std::pair<int32_t, int32_t> slot_range_;
   /* Export slot range */

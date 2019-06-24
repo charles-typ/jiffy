@@ -16,12 +16,12 @@ using namespace utils;
 default_partition::default_partition(block_memory_manager *manager,
                                      const std::string &name,
                                      const std::string &metadata,
-                                     const utils::property_map &conf,
+                                     const utils::property_map &,
                                      const std::string &directory_host,
                                      int directory_port,
                                      const std::string &auto_scaling_host,
                                      int auto_scaling_port)
-    : data_structure_partition(manager, name, metadata, conf, directory_host, directory_port, auto_scaling_host, auto_scaling_port, {}) {
+    : data_structure_partition(manager, name, metadata, directory_host, directory_port, auto_scaling_host, auto_scaling_port, {}, 0, build_allocator<char>()) {
 }
 
 void default_partition::run_command(std::vector<std::string> &_return,
@@ -39,6 +39,14 @@ bool default_partition::sync(const std::string &) {
 
 bool default_partition::dump(const std::string &) {
   return false;
+}
+
+std::string default_partition::clear() {
+  return "!ok";
+}
+
+void default_partition::clear_all() {
+  return;
 }
 
 void default_partition::forward_all() {

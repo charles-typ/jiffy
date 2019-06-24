@@ -22,8 +22,7 @@ fifo_queue_partition::fifo_queue_partition(block_memory_manager *manager,
                                            int directory_port,
                                            const std::string &auto_scaling_host,
                                            int auto_scaling_port)
-    : data_structure_partition(manager, name, metadata, conf, directory_host, directory_port, auto_scaling_host, auto_scaling_port, FIFO_QUEUE_OPS),
-      partition_(manager->mb_capacity(), build_allocator<char>()),
+    : data_structure_partition<fifo_queue_type, size_t, block_memory_allocator<char>>(manager, name, metadata, directory_host, directory_port, auto_scaling_host, auto_scaling_port, FIFO_QUEUE_OPS, manager->mb_capacity(), build_allocator<char>()),
       new_block_available_(false) {
   auto ser = conf.get("fifoqueue.serializer", "csv");
   if (ser == "binary") {
@@ -200,43 +199,7 @@ void fifo_queue_partition::run_command(std::vector<std::string> &_return,
   }
 }
 
-std::size_t fifo_queue_partition::size() const {
-  return partition_.size();
-}
-
-bool fifo_queue_partition::empty() const {
-  return partition_.empty();
-}
-
-bool fifo_queue_partition::is_dirty() const {
-  return dirty_;
-}
-
-void fifo_queue_partition::load(const std::string &path) {
-  auto remote = persistent::persistent_store::instance(path, ser_);
-  auto decomposed = persistent::persistent_store::decompose_path(path);
-  remote->read<fifo_queue_type>(decomposed.second, partition_);
-}
-
-bool fifo_queue_partition::sync(const std::string &path) {
-  if (dirty_) {
-    auto remote = persistent::persistent_store::instance(path, ser_);
-    auto decomposed = persistent::persistent_store::decompose_path(path);
-    remote->write<fifo_queue_type>(partition_, decomposed.second);
-    dirty_ = false;
-    return true;
-  }
-  return false;
-}
-
-bool fifo_queue_partition::dump(const std::string &path) {
-  bool flushed = false;
-  if (dirty_) {
-    auto remote = persistent::persistent_store::instance(path, ser_);
-    auto decomposed = persistent::persistent_store::decompose_path(path);
-    remote->write<fifo_queue_type>(partition_, decomposed.second);
-    flushed = true;
-  }
+void fifo_queue_partition::clear_all() {
   partition_.clear();
   next_->reset("nil");
   path_ = "";
@@ -245,7 +208,6 @@ bool fifo_queue_partition::dump(const std::string &path) {
   role_ = singleton;
   overload_ = false;
   dirty_ = false;
-  return flushed;
 }
 
 void fifo_queue_partition::forward_all() {

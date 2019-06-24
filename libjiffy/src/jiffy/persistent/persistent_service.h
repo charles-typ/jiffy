@@ -29,12 +29,12 @@ class persistent_service {
 
   template<typename Datatype>
   void write(const Datatype &table, const std::string &out_path) {
-    return virtual_write(table, out_path);
+    virtual_write(table, out_path);
   }
 
   template<typename Datatype>
   void read(const std::string &in_path, Datatype &table) {
-    return virtual_read(in_path, table);
+    virtual_read(in_path, table);
   }
 
   virtual std::string URI() = 0;
@@ -51,9 +51,11 @@ class persistent_service {
   /* Custom serializer/deserializer */
   std::shared_ptr<storage::serde> ser_;
   virtual void virtual_write(const storage::locked_hash_table_type &table, const std::string &out_path) = 0;
+  virtual void virtual_write(storage::hash_table_type table, const std::string &out_path) = 0;
   virtual void virtual_write(const storage::fifo_queue_type &table, const std::string &out_path) = 0;
   virtual void virtual_write(const storage::file_type &table, const std::string &out_path) = 0;
   virtual void virtual_read(const std::string &in_path, storage::locked_hash_table_type &table) = 0;
+  virtual void virtual_read(const std::string &in_path, storage::hash_table_type &table) = 0;
   virtual void virtual_read(const std::string &in_path, storage::fifo_queue_type &table) = 0;
   virtual void virtual_read(const std::string &in_path, storage::file_type &table) = 0;
 };
@@ -67,22 +69,32 @@ class derived_persistent : public persistent_service_impl {
   }
  private:
   void virtual_write(const storage::locked_hash_table_type &table, const std::string &out_path) final {
-    return persistent_service_impl::write_impl(table, out_path);
+    persistent_service_impl::write_impl(table, out_path);
+  }
+  void virtual_write(storage::hash_table_type table, const std::string &out_path) final {
+    storage::locked_hash_table_type ltable = table.lock_table();
+    persistent_service_impl::write_impl(ltable, out_path);
+    ltable.unlock();
   }
   void virtual_write(const storage::fifo_queue_type &table, const std::string &out_path) final {
-    return persistent_service_impl::write_impl(table, out_path);
+    persistent_service_impl::write_impl(table, out_path);
   }
   void virtual_write(const storage::file_type &table, const std::string &out_path) final {
-    return persistent_service_impl::write_impl(table, out_path);
+    persistent_service_impl::write_impl(table, out_path);
   }
   void virtual_read(const std::string &in_path, storage::locked_hash_table_type &table) final {
-    return persistent_service_impl::read_impl(in_path, table);
+    persistent_service_impl::read_impl(in_path, table);
+  }
+  void virtual_read(const std::string &in_path, storage::hash_table_type &table) final {
+    storage::locked_hash_table_type ltable = table.lock_table();
+    persistent_service_impl::read_impl(in_path, ltable);
+    ltable.unlock();
   }
   void virtual_read(const std::string &in_path, storage::fifo_queue_type &table) final {
-    return persistent_service_impl::read_impl(in_path, table);
+    persistent_service_impl::read_impl(in_path, table);
   }
   void virtual_read(const std::string &in_path, storage::file_type &table) final {
-    return persistent_service_impl::read_impl(in_path, table);
+    persistent_service_impl::read_impl(in_path, table);
   }
 };
 

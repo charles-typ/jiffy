@@ -13,7 +13,7 @@
 namespace jiffy {
 namespace storage {
 
-class file_partition : public data_structure_partition<file_type, char> {
+class file_partition : public data_structure_partition<file_type, size_t, block_memory_allocator<char>> {
  public:
 
   /**
@@ -84,6 +84,7 @@ class file_partition : public data_structure_partition<file_type, char> {
 
   void run_command(std::vector<std::string> &_return, int cmd_id, const std::vector<std::string> &args) override;
 
+  void clear_all() override;
   /**
    * @brief Send all key and value to the next block
    */

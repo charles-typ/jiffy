@@ -9,7 +9,7 @@
 namespace jiffy {
 namespace storage {
 
-class default_partition : public data_structure_partition {
+class default_partition : public data_structure_partition<file_type, size_t, block_memory_allocator<char>> {
  public:
 
   /**
@@ -66,6 +66,9 @@ class default_partition : public data_structure_partition {
 
   bool dump(const std::string &path) override;
 
+  void clear_all() override;
+
+  std::string clear() override;
   /**
    * @brief Send all key and value to the next block
    */
