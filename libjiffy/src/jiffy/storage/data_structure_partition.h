@@ -70,12 +70,6 @@ class data_structure_partition : public chain_module {
   bool dump(const std::string &path) override;
 
   /**
-   * @brief Virtual function for forwarding all
-   */
-
-  virtual void forward_all() = 0;
-
-  /**
    * @brief Clear all data and metadata of partition
    */
   virtual void clear_all() = 0;
