@@ -1228,7 +1228,7 @@ class directory_management_ops {
                                 const std::string &old_partition_name,
                                 const std::string &new_partition_name,
                                 const std::string &partition_metadata) = 0;
-  
+
   /**
    * @brief Fetch the capacity of the partition
    * @param path File path
