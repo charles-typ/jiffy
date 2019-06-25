@@ -9,6 +9,10 @@
 namespace jiffy {
 namespace storage {
 
+/**
+ * Default partition class
+ * When partition is deleted, change to default partition and ends connection
+ */
 class default_partition : public data_structure_partition {
  public:
 
@@ -66,6 +70,11 @@ class default_partition : public data_structure_partition {
 
   bool dump(const std::string &path) override;
 
+  /**
+   * @brief Clear all content in the partition
+   */
+  std::string clear() override;
+  
   /**
    * @brief Send all key and value to the next block
    */

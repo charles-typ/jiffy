@@ -49,7 +49,7 @@ class data_structure_partition : public chain_module {
   virtual void run_command(std::vector<std::string> &_return,
                            int32_t cmd_id,
                            const std::vector<std::string> &args) = 0;
-   /**
+  /**
    * Management Operations
    * Virtual function
    */
@@ -71,9 +71,13 @@ class data_structure_partition : public chain_module {
   virtual bool dump(const std::string &path) = 0;
 
   /**
+   * @brief Clear all content of the partition
+   */
+  virtual std::string clear() = 0;
+
+  /**
    * @brief Virtual function for forwarding all
    */
-
   virtual void forward_all() = 0;
 
  protected:
@@ -97,6 +101,7 @@ class data_structure_partition : public chain_module {
 
   /* Low threshold */
   double threshold_lo_;
+  
   /* High threshold */
   double threshold_hi_;
 

@@ -48,6 +48,15 @@ class partition {
   }
 
   /**
+   * @brief Virtual function for running a command on a block 
+   * @param _return Return value 
+   * @param cmd_id Operation identifier 
+   * @param args Operation arguments 
+   */ 
+
+  virtual void run_command(std::vector<std::string> &_return, int32_t cmd_id, const std::vector<std::string> &args) = 0;
+
+  /**
    * @brief Set block path
    * @param path Block path
    */
@@ -65,6 +74,7 @@ class partition {
    * @brief Set partition name
    * @param name Partition name
    */
+
   void name(const std::string &name);
 
   /**
@@ -85,6 +95,7 @@ class partition {
    * @brief Fetch partition metadata
    * @return Partition metadata
    */
+
   const std::string &metadata() const;
 
   /**
@@ -112,15 +123,46 @@ class partition {
   std::string command_name(int cmd_id);
 
   /**
+   * @brief Load persistent data into the block, lock the block while doing this
+   * @param path Persistent storage path
+   */
+
+  virtual void load(const std::string &path) = 0;
+
+  /**
+   * @brief Synchronize partition with persistent store.
+   * @param path Persistent store path to write to.
+   * @return True if data was written, false otherwise.
+   */
+
+  virtual bool sync(const std::string &path) = 0;
+
+  /**
+   * @brief Dump partition data to persistent store.
+   * @param path Persistent store path to write to.
+   * @return True if data was written, false otherwise.
+   */
+
+  virtual bool dump(const std::string &path) = 0;
+
+  /**
+   * @brief Virtual function for forwarding all
+   */
+
+  virtual void forward_all() = 0;
+
+  /**
    * @brief Get the storage capacity of the partition.
    * @return The storage capacity of the partition.
    */
+
   std::size_t storage_capacity();
 
   /**
    * @brief Get the storage utilized by the partition.
    * @return The storage capacity utilized by the partition.
    */
+
   std::size_t storage_size();
 
   /**

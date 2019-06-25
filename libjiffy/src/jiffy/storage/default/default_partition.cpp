@@ -41,6 +41,9 @@ bool default_partition::dump(const std::string &) {
   return false;
 }
 
+std::string default_partition::clear() {
+  return "!ok";
+}
 void default_partition::forward_all() {
 }
 

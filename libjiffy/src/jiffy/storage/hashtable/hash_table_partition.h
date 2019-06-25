@@ -13,15 +13,6 @@
 namespace jiffy {
 namespace storage {
 
-/**
- * Hash partition state
- */
-
-enum hash_partition_state {
-  regular = 0,
-  importing = 1,
-  exporting = 2
-};
 
 /* Key value partition structure class, inherited from chain module */
 class hash_table_partition : public data_structure_partition {
@@ -105,26 +96,6 @@ class hash_table_partition : public data_structure_partition {
   bool in_slot_range(int32_t slot) {
     std::shared_lock<std::shared_mutex> lock(metadata_mtx_);
     return slot >= slot_range_.first && slot < slot_range_.second;
-  }
-
-  /**
-   * @brief Set block state
-   * @param state Block state
-   */
-
-  void state(hash_partition_state state) {
-    std::unique_lock<std::shared_mutex> lock(metadata_mtx_);
-    state_ = state;
-  }
-
-  /**
-   * @brief Fetch block state
-   * @return Block state
-   */
-
-  const hash_partition_state &state() const {
-    std::shared_lock<std::shared_mutex> lock(metadata_mtx_);
-    return state_;
   }
 
   /**
@@ -405,6 +376,11 @@ class hash_table_partition : public data_structure_partition {
   bool dump(const std::string &path) override;
 
   /**
+   * @brief Clear all content of the partition
+   */
+  std::string clear() override;
+  
+  /**
    * @brief Send all key and value to the next block
    */
 
@@ -433,8 +409,6 @@ class hash_table_partition : public data_structure_partition {
 
   /* Cuckoo hash map partition */
   hash_table_type block_;
-  /* Block state, regular, importing or exporting */
-  hash_partition_state state_;
   /* Hash slot range */
   std::pair<int32_t, int32_t> slot_range_;
   /* Export slot range */

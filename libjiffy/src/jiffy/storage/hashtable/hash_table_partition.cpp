@@ -441,13 +441,21 @@ bool hash_table_partition::dump(const std::string &path) {
   sub_map_.clear();
   slot_range_.first = 0;
   slot_range_.second = -1;
-  state_ = hash_partition_state::regular;
   chain_ = {};
   role_ = singleton;
   overload_ = false;
   underload_ = false;
   dirty_ = false;
   return flushed;
+}
+
+std::string hash_table_partition::clear() {
+  block_.clear();
+  path_ = "";
+  slot_range_.first = 0;
+  slot_range_.second = -1;
+  overload_ = false;
+  return "!ok";
 }
 
 void hash_table_partition::forward_all() {
