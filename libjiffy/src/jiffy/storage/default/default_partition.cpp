@@ -24,7 +24,7 @@ default_partition::default_partition(block_memory_manager *manager,
                                      const block_response_client_map &client_map)
     : chain_module(manager, name, metadata, {}) {
       if(!client_map.empty()) {
-        set_clients(client_map);
+        //set_clients(client_map);
         LOG(log_level::info) << "Setting up default partition";
       }
 }
