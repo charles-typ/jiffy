@@ -93,6 +93,7 @@ std::vector<std::string> replica_chain_client::run_command(int32_t cmd_id, const
       }
     } catch (apache::thrift::transport::TTransportException &e) {
       LOG(log_level::info) << "Error in connection to chain: " << e.what();
+      LOG(log_level::info) << "Chain" << chain_.to_string();
       connect(fs_->resolve_failures(path_, chain_), timeout_ms_);
       retry = true;
     } catch (std::logic_error &e) {
