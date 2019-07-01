@@ -43,7 +43,7 @@ class partition {
    */
   virtual ~partition() {
     client_map_.send_failure();
-    client_map_.clear();
+    //client_map_.clear();
     sub_map_.clear();
   }
 
