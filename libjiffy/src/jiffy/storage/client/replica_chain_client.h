@@ -121,6 +121,8 @@ class replica_chain_client {
   block_client tail_;
   /* Command response reader */
   block_client::command_response_reader response_reader_;
+  /* Command response reader */
+  block_client::command_response_reader end_connection_response_reader_;
   /* Clients for each commands */
   std::vector<client_ref> cmd_client_;
   /* Bool value, true if request is in flight */
