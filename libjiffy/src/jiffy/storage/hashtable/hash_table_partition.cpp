@@ -200,6 +200,7 @@ void hash_table_partition::get_data_in_slot_range(std::vector<std::string> &data
 }
 
 std::string hash_table_partition::update_partition(const std::string &new_name, const std::string &new_metadata) {
+  LOG(log_level::info) << "Update partition " << name() << " " << metadata() << "to" << new_name << " " << new_metadata;
   update_lock.lock();
   if (new_name == "merging" && new_metadata == "merging") {
     if (metadata() == "regular" && name() != "0_65536") {
