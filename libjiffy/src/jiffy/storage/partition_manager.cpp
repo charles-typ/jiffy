@@ -20,7 +20,8 @@ std::shared_ptr<chain_module> partition_manager::build_partition(block_memory_ma
                                                                  const std::string &directory_host,
                                                                  const int directory_port,
                                                                  const std::string &auto_scaling_host,
-                                                                 const int auto_scaling_port) {
+                                                                 const int auto_scaling_port,
+                                                                 const block_response_client_map & client_map) {
   auto it = implementations().find(type);
   if (it == implementations().end()) {
     return nullptr;
@@ -32,7 +33,8 @@ std::shared_ptr<chain_module> partition_manager::build_partition(block_memory_ma
                            directory_host,
                            directory_port,
                            auto_scaling_host,
-                           auto_scaling_port);
+                           auto_scaling_port,
+                           client_map);
 }
 
 partition_manager::partition_map &partition_manager::implementations() {

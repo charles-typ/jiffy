@@ -23,7 +23,8 @@ block::block(const std::string &id,
                                                directory_host,
                                                directory_port,
                                                auto_scaling_host,
-                                               auto_scaling_port)),
+                                               auto_scaling_port,
+                                               {})),
       directory_host_(directory_host),
       directory_port_(directory_port),
       auto_scaling_host_(auto_scaling_host),
@@ -56,7 +57,8 @@ void block::setup(const std::string &type,
                                              directory_host_,
                                              directory_port_,
                                              auto_scaling_host_,
-                                             auto_scaling_port_);
+                                             auto_scaling_port_,
+                                             {});
   if (impl_ == nullptr) {
     throw std::invalid_argument("No such type " + type);
   }
@@ -72,6 +74,7 @@ void block::destroy() {
   int directory_port_ = 0;
   int auto_scaling_port_ = 0;
   utils::property_map conf;
+  auto client_map = impl_->clients();
   impl_.reset();
   impl_ = partition_manager::build_partition(&manager_,
                                              type,
@@ -81,7 +84,8 @@ void block::destroy() {
                                              directory_host_,
                                              directory_port_,
                                              auto_scaling_host_,
-                                             auto_scaling_port_);
+                                             auto_scaling_port_,
+                                             client_map);
   if (impl_ == nullptr) {
     throw std::invalid_argument("Fail to set default partition");
   }

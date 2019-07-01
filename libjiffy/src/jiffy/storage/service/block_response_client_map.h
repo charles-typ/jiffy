@@ -51,8 +51,16 @@ class block_response_client_map {
 
   /**
    * @brief Send failing request when block is deleted
+   * @return Boolean, true if map empty
    */
   void send_failure();
+
+  /**
+   * @brief Check if map is empty
+   */
+  bool empty() const {
+    return clients_.empty();
+  }
 
  private:
   /* Response client map */

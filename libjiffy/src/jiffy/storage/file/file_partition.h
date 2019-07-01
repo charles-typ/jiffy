@@ -34,7 +34,8 @@ class file_partition : public chain_module {
                           const std::string &directory_host = "localhost",
                           int directory_port = 9091,
                           const std::string &auto_scaling_host = "localhost",
-                          int auto_scaling_port = 9095);
+                          int auto_scaling_port = 9095,
+                          const block_response_client_map & client_map = {});
 
   /**
    * @brief Virtual destructor

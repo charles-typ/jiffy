@@ -180,6 +180,14 @@ class partition {
   block_response_client_map &clients();
 
   /**
+   * @brief Set block response client map
+   * @param client_map Block response client map
+   */
+  void set_clients(const block_response_client_map & client_map) {
+    client_map_ = client_map;
+  }
+
+  /**
    * @brief Set partition name and partition metadata
    * @param name New partition name
    * @param metadata New partition metadata

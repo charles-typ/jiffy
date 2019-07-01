@@ -20,8 +20,11 @@ default_partition::default_partition(block_memory_manager *manager,
                                      const std::string &,
                                      int,
                                      const std::string &,
-                                     int)
+                                     int,
+                                     const block_response_client_map &client_map)
     : chain_module(manager, name, metadata, {}) {
+      if(!client_map.empty())
+        set_clients(client_map);
 }
 
 void default_partition::run_command(std::vector<std::string> &_return,

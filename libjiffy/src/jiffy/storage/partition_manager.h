@@ -29,7 +29,8 @@ class partition_builder {
                                               const std::string &directory_host,
                                               const int directory_port,
                                               const std::string &auto_scaling_host,
-                                              const int auto_scaling_port) = 0;
+                                              const int auto_scaling_port,
+                                              const block_response_client_map & client_map) = 0;
 };
 
 class partition_manager {
@@ -59,7 +60,8 @@ class partition_manager {
                                                        const std::string &directory_host,
                                                        const int directory_port,
                                                        const std::string &auto_scaling_host,
-                                                       const int auto_scaling_port);
+                                                       const int auto_scaling_port,
+                                                       const block_response_client_map & client_map);
 
  private:
   /**
@@ -84,9 +86,11 @@ class impl##_builder : public partition_builder {                               
                                       const std::string& directory_host,                              \
                                       const int directory_port,                                       \
                                       const std::string& auto_scaling_host,                           \
-                                      const int auto_scaling_port) override {                         \
+                                      const int auto_scaling_port,                                    \
+                                      const block_response_client_map & client_map) override {        \
     return std::make_shared<impl>(manager, name, metadata, conf, directory_host,                      \
-                                  directory_port, auto_scaling_host, auto_scaling_port);              \
+                                  directory_port, auto_scaling_host, auto_scaling_port,               \
+                                                                    client_map);                      \
   }                                                                                                   \
 };                                                                                                    \
                                                                                                       \
