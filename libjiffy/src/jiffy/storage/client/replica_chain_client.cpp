@@ -45,11 +45,11 @@ void replica_chain_client::connect(const directory::replica_chain &chain, int ti
   if (chain_.block_ids.size() == 1) {
     tail_ = head_;
   } else {
+    end_connection_response_reader_ = head_.get_command_response_reader(seq_.client_id);
     auto t = block_id_parser::parse(chain_.block_ids.back());
     tail_.connect(t.host, t.service_port, t.id, timeout_ms);
   }
   response_reader_ = tail_.get_command_response_reader(seq_.client_id);
-  end_connection_response_reader_ = head_.get_command_response_reader(seq_.client_id);
   in_flight_ = false;
 }
 
@@ -65,9 +65,13 @@ std::vector<std::string> replica_chain_client::recv_response() {
   std::vector<std::string> ret;
   int64_t rseq = response_reader_.recv_response(ret);
   if (rseq != seq_.client_seq_no) {
-    std::vector<std::string> end_ret;
-    int64_t eseq = end_connection_response_reader_.recv_response(end_ret);
-    if(eseq == -1) {
+    if(chain_.block_ids.size() != 1) {
+      std::vector<std::string> end_ret;
+      int64_t eseq = end_connection_response_reader_.recv_response(end_ret);
+      if(eseq == -1) {
+        return std::vector<std::string>{"!block_moved"};
+      }
+    } else if(rseq == -1) {
       return std::vector<std::string>{"!block_moved"};
     }
     throw std::logic_error("SEQ: Expected=" + std::to_string(seq_.client_seq_no) + " Received=" + std::to_string(rseq));
