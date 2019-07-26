@@ -21,17 +21,14 @@ default_partition::default_partition(block_memory_manager *manager,
                                      int,
                                      const std::string &,
                                      int)
-    : chain_module(manager, name, metadata, {}) {
-}
+    : chain_module(manager, name, metadata, {}) {}
 
 void default_partition::run_command(std::vector<std::string> &_return,
-                                    int32_t,
                                     const std::vector<std::string> &) {
   _return.emplace_back("!block_moved");
 }
 
-void default_partition::load(const std::string &) {
-}
+void default_partition::load(const std::string &) {}
 
 bool default_partition::sync(const std::string &) {
   return false;
@@ -41,8 +38,7 @@ bool default_partition::dump(const std::string &) {
   return false;
 }
 
-void default_partition::forward_all() {
-}
+void default_partition::forward_all() {}
 
 REGISTER_IMPLEMENTATION("default", default_partition);
 

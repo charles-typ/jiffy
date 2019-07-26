@@ -39,77 +39,72 @@ class file_partition : public chain_module {
   /**
    * @brief Virtual destructor
    */
-  virtual ~file_partition() = default;
+  ~file_partition() override = default;
 
   /**
    * @brief Fetch block size
    * @return Block size
    */
-
   std::size_t size() const;
 
   /**
    * @brief Check if block is empty
    * @return Bool value, true if empty
    */
-
   bool empty() const;
 
   /**
-   * @brief Write to the file
-   * @param message New message
-   * @return Write return status string
+   * @brief Write data to the file
+   * @param _return Response
+   * @param args Arguments
    */
-  std::string write(const std::string &message);
+  void write(response& _return, const arg_list &args);
 
   /**
-   * @brief Read a new message from the file
-   * @param position Read position
-   * @param size Number of bytes to be read
-   * @return Read return status string
+   * @brief Read data from the file
+   * @param _return Response
+   * @param args Arguments
    */
-  std::string read(std::string position, std::string size);
+  void read(response& _return, const arg_list &args);
 
   /**
    *@brief Fetch the metadata for seek
-   *@param ret Metadata to be returned
+   * @param _return Response
+   * @param args Arguments
    */
-  void seek(std::vector<std::string> &ret);
+  void seek(response& _return, const arg_list &args);
 
   /**
    * @brief Clear the file
-   * @return Clear return status
+   * @param _return Response
+   * @param args Arguments
    */
-  std::string clear();
+  void clear(response& _return, const arg_list &args);
 
   /**
-   * @brief Update partition with next target partition
-   * @param next_target Next target partition string
-   * @return Update status string
+   * @brief Update partition with next partition pointer
+   * @param _return Response
+   * @param args Arguments
    */
-  std::string update_partition(const std::string &next_target);
+  void update_partition(response& _return, const arg_list &args);
 
   /**
-   * @brief Run particular command on file
-   * @param _return Return status to be collected
-   * @param cmd_id Operation identifier
-   * @param args Command arguments
+   * @brief Run command on file partition
+   * @param _return Response
+   * @param args Arguments
    */
-
-  void run_command(std::vector<std::string> &_return, int cmd_id, const std::vector<std::string> &args) override;
+  void run_command(response &_return, const arg_list &args) override;
 
   /**
    * @brief Atomically check dirty bit
    * @return Bool value, true if block is dirty
    */
-
   bool is_dirty() const;
 
   /**
    * @brief Load persistent data into the block
    * @param path Persistent storage path
    */
-
   void load(const std::string &path) override;
 
   /**
@@ -117,7 +112,6 @@ class file_partition : public chain_module {
    * @param path Persistent storage path
    * @return Bool value, true if block successfully synchronized
    */
-
   bool sync(const std::string &path) override;
 
   /**
@@ -125,43 +119,27 @@ class file_partition : public chain_module {
    * @param path Persistent storage path
    * @return Bool value, true if block successfully dumped
    */
-
   bool dump(const std::string &path) override;
 
   /**
    * @brief Send all key and value to the next block
    */
-
   void forward_all() override;
-
-  /**
-   * @brief Set next target string
-   * @param block_ids Next target replica chain data blocks
-   */
-  void next_target(std::vector<std::string> &target) {
-    std::unique_lock<std::shared_mutex> lock(metadata_mtx_);
-    next_target_string = "";
-    for (const auto &block: target) {
-      next_target_string += (block + "!");
-    }
-    next_target_string.pop_back();
-  }
 
   /**
    * @brief Set next target string
    * @param target_str Next target replica chain in string format
    */
   void next_target(const std::string &target_str) {
-    std::unique_lock<std::shared_mutex> lock(metadata_mtx_);
-    next_target_string = target_str;
+    next_target_str_ = target_str;
   }
 
   /**
    * @brief Fetch next target string
    * @return Next target string
    */
-  std::string next_target_str() {
-    return next_target_string;
+  std::string next_target() const {
+    return next_target_str_;
   }
 
  private:
@@ -170,7 +148,6 @@ class file_partition : public chain_module {
    * @brief Check if block is overloaded
    * @return Bool value, true if block size is over the high threshold capacity
    */
-
   bool overload();
 
   /* File partition */
@@ -183,7 +160,7 @@ class file_partition : public chain_module {
   double threshold_hi_;
 
   /* Bool for partition slot range splitting */
-  bool overload_;
+  bool scaling_up_;
 
   /* Partition dirty bit */
   bool dirty_;
@@ -199,11 +176,12 @@ class file_partition : public chain_module {
 
   /* Auto scaling server hostname */
   std::string auto_scaling_host_;
+
   /* Auto scaling server port number */
   int auto_scaling_port_;
 
   /* Next partition target string */
-  std::string next_target_string;
+  std::string next_target_str_;
 
 };
 

@@ -2,8 +2,8 @@ from __future__ import print_function
 
 import os
 import subprocess
+
 import sys
-import tempfile
 import time
 
 try:
@@ -32,22 +32,6 @@ def wait_till_server_ready(host, port):
             check = False
         except TTransport.TTransportException:
             time.sleep(0.1)
-
-
-def gen_async_kv_ops():
-    tf = tempfile.NamedTemporaryFile(delete=False)
-    with open(tf.name, "w+") as f:
-        for i in range(0, 1000):
-            f.write("%s %d %d\n" % ("put", i, i))
-        for i in range(0, 1000):
-            f.write("%s %d\n" % ("get", i))
-        for i in range(0, 1000):
-            f.write("%s %d %d\n" % ("update", i, i + 1000))
-        for i in range(0, 1000):
-            f.write("%s %d\n" % ("get", i))
-        for i in range(0, 1000):
-            f.write("%s %d\n" % ("remove", i))
-    return tf.name
 
 
 class JiffyServer(object):
@@ -181,88 +165,38 @@ class TestClient(TestCase):
 
         # Test exists/get/put
         for i in range(0, 1000):
-            self.assertEqual(b('!ok'), kv.put(b(str(i)), b(str(i))))
+            try:
+                kv.put(b(str(i)), b(str(i)))
+            except KeyError as k:
+                self.fail("Received error message: {}".format(k))
 
         for i in range(0, 1000):
-            if getattr(kv, "exists", None) is not None:
-                self.assertTrue(kv.exists(b(str(i))))
+            self.assertTrue(kv.exists(b(str(i))))
             self.assertEqual(b(str(i)), kv.get(b(str(i))))
 
         for i in range(1000, 2000):
-            if getattr(kv, "exists", None) is not None:
-                self.assertFalse(kv.exists(b(str(i))))
-            self.assertEqual(b('!key_not_found'), kv.get(b(str(i))))
-
-        if getattr(kv, "num_keys", None) is not None:
-            self.assertEqual(1000, kv.num_keys())
+            self.assertFalse(kv.exists(b(str(i))))
+            self.assertRaises(KeyError, kv.get, b(str(i)))
 
         # Test update
         for i in range(0, 1000):
             self.assertEqual(b(str(i)), kv.update(b(str(i)), b(str(i + 1000))))
 
         for i in range(1000, 2000):
-            self.assertEqual(b('!key_not_found'), kv.update(b(str(i)), b(str(i + 1000))))
+            self.assertRaises(KeyError, kv.update, b(str(i)), b(str(i + 1000)))
 
         for i in range(0, 1000):
             self.assertEqual(b(str(i + 1000)), kv.get(b(str(i))))
-
-        if getattr(kv, "num_keys", None) is not None:
-            self.assertEqual(1000, kv.num_keys())
 
         # Test remove
         for i in range(0, 1000):
             self.assertEqual(b(str(i + 1000)), kv.remove(b(str(i))))
 
         for i in range(1000, 2000):
-            self.assertEqual(b('!key_not_found'), kv.remove(b(str(i))))
+            self.assertRaises(KeyError, kv.remove, b(str(i)))
 
         for i in range(0, 1000):
-            self.assertEqual(b('!key_not_found'), kv.get(b(str(i))))
-
-        if getattr(kv, "num_keys", None) is not None:
-            self.assertEqual(0, kv.num_keys())
-
-        # Batched Ops
-        valid_keys = [b(str(i)) for i in range(1000)]
-        invalid_keys = [b(str(i)) for i in range(1000, 2000)]
-        original_values = [b(str(i)) for i in range(1000)]
-        updated_values = [b(str(i)) for i in range(1000, 2000)]
-        original_kvs = [b(str(j)) for i in range(1000) for j in [i, i]]
-        updated_kvs = [b(str(j)) for i in range(1000) for j in [i, i + 1000]]
-        invalid_kvs = [b(str(j)) for i in range(1000, 2000) for j in [i, i + 1000]]
-
-        # Test exists/get/put
-        self.assertEqual([b('!ok')] * 1000, kv.multi_put(original_kvs))
-        self.assertEqual(original_values, kv.multi_get(valid_keys))
-        if getattr(kv, "multi_exists", None) is not None:
-            self.assertEqual([True] * 1000, kv.multi_exists(valid_keys))
-        self.assertEqual([b('!key_not_found')] * 1000, kv.multi_get(invalid_keys))
-        if getattr(kv, "multi_exists", None) is not None:
-            self.assertEqual([False] * 1000, kv.multi_exists(invalid_keys))
-
-        if getattr(kv, "num_keys", None) is not None:
-            self.assertEqual(1000, kv.num_keys())
-
-        # Test update
-        self.assertEqual(original_values, kv.multi_update(updated_kvs))
-        self.assertEqual([b('!key_not_found')] * 1000, kv.multi_update(invalid_kvs))
-        self.assertEqual(updated_values, kv.multi_get(valid_keys))
-
-        if getattr(kv, "num_keys", None) is not None:
-            self.assertEqual(1000, kv.num_keys())
-
-        # Test remove
-        self.assertEqual(updated_values, kv.multi_remove(valid_keys))
-        self.assertEqual([b('!key_not_found')] * 1000, kv.multi_remove(invalid_keys))
-        self.assertEqual([b('!key_not_found')] * 1000, kv.multi_get(valid_keys))
-
-        if getattr(kv, "num_keys", None) is not None:
-            self.assertEqual(0, kv.num_keys())
-
-        if getattr(kv, "lock", None) is not None:
-            locked_kv = kv.lock()
-            self.hash_table_ops(locked_kv)
-            locked_kv.unlock()
+            self.assertRaises(KeyError, kv.get, b(str(i)))
 
     def test_lease_worker(self):
         self.start_servers()
@@ -369,20 +303,24 @@ class TestClient(TestCase):
                 client.disconnect()
                 self.stop_servers()
 
-    # def test_auto_scale(self):
-    #     self.start_servers(auto_scale=True)
-    #     client = self.jiffy_client()
-    #     try:
-    #         kv = client.create("/a/file.txt", "local://tmp")
-    #         for i in range(0, 2000):
-    #             self.assertEqual(b('!ok'), kv.put(b(str(i)), b(str(i))))
-    #         self.assertEqual(4, len(client.fs.dstatus("/a/file.txt").data_blocks))
-    #         for i in range(0, 2000):
-    #             self.assertEqual(b(str(i)), kv.remove(b(str(i))))
-    #         self.assertEqual(1, len(client.fs.dstatus("/a/file.txt").data_blocks))
-    #     finally:
-    #         client.disconnect()
-    #         self.stop_servers()
+    def test_auto_scale(self):
+        self.start_servers(auto_scale=True)
+        client = self.jiffy_client()
+        try:
+            kv = client.create_hash_table("/a/file.txt", "local://tmp")
+            for i in range(0, 2000):
+                try:
+                    kv.put(b(str(i)), b(str(i)))
+                except KeyError as k:
+                    self.fail("Received error message: {}".format(k))
+
+            self.assertEqual(2, len(client.fs.dstatus("/a/file.txt").data_blocks))
+            for i in range(0, 2000):
+                self.assertEqual(b(str(i)), kv.remove(b(str(i))))
+            self.assertEqual(1, len(client.fs.dstatus("/a/file.txt").data_blocks))
+        finally:
+            client.disconnect()
+            self.stop_servers()
 
     def test_notifications(self):
         self.start_servers()

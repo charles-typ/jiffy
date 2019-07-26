@@ -93,8 +93,8 @@ if (BUILD_STORAGE OR BUILD_DIRECTORY)
           src/jiffy/storage/file/file_ops.cpp
           src/jiffy/storage/file/file_partition.h
           src/jiffy/storage/file/file_partition.cpp
-          src/jiffy/storage/file/dummy_block.h
-          src/jiffy/storage/file/dummy_block.cpp
+          src/jiffy/storage/file/file_block.h
+          src/jiffy/storage/file/file_block.cpp
           src/jiffy/storage/fifoqueue/fifo_queue_defs.h
           src/jiffy/storage/fifoqueue/fifo_queue_ops.h
           src/jiffy/storage/fifoqueue/fifo_queue_ops.cpp
@@ -222,7 +222,11 @@ if (BUILD_STORAGE OR BUILD_DIRECTORY)
           src/jiffy/storage/types/binary.h
           src/jiffy/storage/types/binary.cpp
           src/jiffy/storage/types/byte_string.h
-          src/jiffy/storage/types/byte_string.cc)
+          src/jiffy/storage/types/byte_string.cc
+          src/jiffy/storage/client/file_writer.cpp
+          src/jiffy/storage/client/file_writer.h
+          src/jiffy/storage/client/file_reader.cpp
+          src/jiffy/storage/client/file_reader.h)
 
   add_dependencies(jiffy thrift_ep awssdk_ep jemalloc_ep)
   target_link_libraries(jiffy ${THRIFT_LIBRARY}
@@ -246,28 +250,27 @@ if (BUILD_STORAGE OR BUILD_DIRECTORY)
     include_directories(${CATCH_INCLUDE_DIR})
     add_executable(jiffy_tests
             test/jiffy_tests.cpp
-            test/auto_scaling_test.cpp
-            test/block_allocation_service_test.cpp
-            test/block_allocator_test.cpp
-            test/chain_replication_test.cpp
+	          test/block_allocation_service_test.cpp
+	          test/block_allocator_test.cpp
             test/directory_lease_test.cpp
-            test/directory_tree_test.cpp
-            test/directory_service_test.cpp
-#            test/file_size_tracker_test.cpp
-            test/hash_table_partition_test.cpp
-            test/hash_table_client_test.cpp
-            test/file_partition_test.cpp
-            test/file_client_test.cpp
-            test/fifo_queue_client_test.cpp
-            test/fifo_queue_partition_test.cpp
             test/lease_expiry_worker_test.cpp
             test/local_store_test.cpp
+            #test/file_size_tracker_test.cpp
+            test/directory_tree_test.cpp
+            test/directory_service_test.cpp
+	          test/file_partition_test.cpp
+	          test/file_client_test.cpp
+            test/fifo_queue_partition_test.cpp
+            test/fifo_queue_client_test.cpp
+            test/hash_table_partition_test.cpp
+            test/hash_table_client_test.cpp
             test/jiffy_client_test.cpp
             test/notification_test.cpp
-            test/storage_manager_test.cpp
+	          test/storage_manager_test.cpp
             test/sync_worker_test.cpp
-            test/test_utils.h
-            )
+            test/chain_replication_test.cpp
+            test/auto_scaling_test.cpp
+            test/test_utils.h)
     target_link_libraries(jiffy_tests jiffy)
     add_dependencies(jiffy_tests catch_ep)
     # Register test
@@ -314,8 +317,8 @@ if (BUILD_CPP_CLIENT)
           src/jiffy/storage/hashtable/hash_table_ops.cpp
           src/jiffy/storage/file/file_ops.h
           src/jiffy/storage/file/file_ops.cpp
-          src/jiffy/storage/file/dummy_block.h
-          src/jiffy/storage/file/dummy_block.cpp
+          src/jiffy/storage/file/file_block.h
+          src/jiffy/storage/file/file_block.cpp
           src/jiffy/storage/fifoqueue/fifo_queue_ops.h
           src/jiffy/storage/fifoqueue/fifo_queue_ops.cpp
           src/jiffy/storage/fifoqueue/string_array.h
@@ -370,7 +373,11 @@ if (BUILD_CPP_CLIENT)
           src/jiffy/utils/string_utils.h
           src/jiffy/utils/property_map.cpp
           src/jiffy/utils/property_map.h
-          src/jiffy/utils/thread_utils.h)
+          src/jiffy/utils/thread_utils.h
+          src/jiffy/storage/client/file_writer.cpp
+          src/jiffy/storage/client/file_writer.h
+          src/jiffy/storage/client/file_reader.cpp
+          src/jiffy/storage/client/file_reader.h)
   add_dependencies(jiffy_client thrift_ep)
   target_link_libraries(jiffy_client ${THRIFT_LIBRARY}
           ${THRIFTNB_LIBRARY}
@@ -384,18 +391,4 @@ if (BUILD_CPP_CLIENT)
           ARCHIVE DESTINATION lib
           LIBRARY DESTINATION lib)
 
-  if (BUILD_BENCHMARKS)
-    add_executable(hash_table_benchmark
-            bench/hash_table_benchmark.cpp
-            bench/benchmark_utils.h)
-    add_executable(hash_table_notification_benchmark
-            bench/hash_table_notification_benchmark.cpp
-            bench/benchmark_utils.h)
-    add_executable(persistence_benchmark
-            bench/persistence_benchmark.cpp
-            bench/benchmark_utils.h)
-    target_link_libraries(hash_table_benchmark jiffy_client)
-    target_link_libraries(hash_table_notification_benchmark jiffy_client)
-    target_link_libraries(persistence_benchmark jiffy)
-  endif ()
 endif ()

@@ -193,7 +193,7 @@ class derived : public impl {
   std::size_t virtual_deserialize(std::shared_ptr<std::istream> in, fifo_queue_type &table) final {
     return impl::deserialize_impl(in, table);
   }
-  
+
   /**
    * @brief Virtual deserialize function for file
    * @param in Input stream
@@ -316,12 +316,14 @@ class csv_serde_impl : public serde {
    */
 
   std::size_t deserialize_impl(const std::shared_ptr<std::istream> &in, file_type &data) {
+    std::size_t offset = 0;
     while (!in->eof()) {
       std::string line;
       std::getline(*in, line, '\n');
       if (line.empty())
         break;
-      data.push_back(line);
+      data.write(line, offset);
+      offset += line.size();
     }
     auto sz = in->tellg();
     return static_cast<std::size_t>(sz);
@@ -434,7 +436,6 @@ class binary_serde_impl : public serde {
     return static_cast<std::size_t>(sz);
   }
 
-
   /**
    * @brief Binary deserialization
    * @param in Input stream
@@ -487,15 +488,17 @@ class binary_serde_impl : public serde {
    * @param table File
    * @return Input stream position
    */
-  
+
   size_t deserialize_impl(const std::shared_ptr<std::istream> &in, file_type &table) {
+    std::size_t offset = 0;
     while (!in->eof()) {
       std::size_t msg_size;
       in->read(reinterpret_cast<char *>(&msg_size), sizeof(msg_size));
       std::string msg;
       msg.resize(msg_size);
       in->read(&msg[0], msg_size);
-      table.push_back(msg);
+      table.write(msg, offset);
+      offset += msg.size();
     }
     auto sz = in->tellg();
     return static_cast<std::size_t>(sz);
