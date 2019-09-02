@@ -318,6 +318,11 @@ class hash_table_partition : public chain_module {
    */
   bool underload();
 
+  /**
+   * @brief Save remove keys in a buffer and remove them once auto_scaling finishes
+   */
+  void buffer_remove();
+
   /* Cuckoo hash map partition */
   hash_table_type block_;
 
@@ -374,6 +379,9 @@ class hash_table_partition : public chain_module {
 
   /* Data update mutex, we want only one update function happen at a time */
   std::mutex update_lock_;
+
+  /* Buffer remove cache */
+  std::vector<std::string> remove_cache_;
 
 };
 

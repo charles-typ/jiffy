@@ -1,6 +1,7 @@
 #include "hash_table_client.h"
 #include "jiffy/utils/string_utils.h"
 #include "jiffy/storage/hashtable/hash_slot.h"
+#include "jiffy/utils/logger.h"
 #include <thread>
 #include <cmath>
 
@@ -16,8 +17,11 @@ hash_table_client::hash_table_client(std::shared_ptr<directory::directory_interf
     : data_structure_client(fs, path, status, timeout_ms) {
   blocks_.clear();
   for (auto &block: status.data_blocks()) {
+    if(client_cache_.find(block.to_string()) == client_cache_.end()) {
+      client_cache_.emplace(std::make_pair(block.to_string(), std::make_shared<replica_chain_client>(fs_, path_, block, HT_OPS, timeout_ms_)));
+    }
     blocks_.emplace(std::make_pair(static_cast<int32_t>(std::stoi(utils::string_utils::split(block.name, '_')[0])),
-                                   std::make_shared<replica_chain_client>(fs_, path_, block, HT_OPS, timeout_ms_)));
+                                   client_cache_[block.to_string()]));
   }
 }
 
@@ -26,8 +30,14 @@ void hash_table_client::refresh() {
   blocks_.clear();
   for (auto &block: status_.data_blocks()) {
     if (block.metadata != "split_importing" && block.metadata != "importing") {
-      blocks_.emplace(std::make_pair(static_cast<int32_t>(std::stoi(utils::string_utils::split(block.name, '_')[0])),
-                                     std::make_shared<replica_chain_client>(fs_, path_, block, HT_OPS, timeout_ms_)));
+      //bool flag = true;
+      if(client_cache_.find(block.to_string()) == client_cache_.end()) {
+        client_cache_.emplace(std::make_pair(block.to_string(), std::make_shared<replica_chain_client>(fs_, path_, block, HT_OPS, timeout_ms_)));
+       // flag = false;
+      }
+      //if(flag) LOG(log_level::info) << "Cache hit";
+        blocks_.emplace(std::make_pair(static_cast<int32_t>(std::stoi(utils::string_utils::split(block.name, '_')[0])),
+                                     client_cache_[block.to_string()]));
     }
   }
   redirect_blocks_.clear();
@@ -122,10 +132,12 @@ void hash_table_client::handle_redirect(std::vector<std::string> &_return, const
 
   }
   if (_return[0] == "!block_moved") {
+      LOG(log_level::info) << "Refreshing for this operation: " << args[0] << " " << args[1];
     refresh();
     throw redo_error();
   }
   if (_return[0] == "!full") {
+      LOG(log_level::info) << "full for this operation: " << args[0] << " " << args[1];
     std::this_thread::sleep_for(std::chrono::milliseconds((int) redo_times_));
     redo_times_++;
     throw redo_error();
