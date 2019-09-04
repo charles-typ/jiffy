@@ -15,6 +15,7 @@ replica_chain_client::replica_chain_client(std::shared_ptr<directory::directory_
                                            const directory::replica_chain &chain,
                                            const command_map &OPS,
                                            int timeout_ms) : fs_(fs), path_(path), in_flight_(false) {
+	LOG(log_level::info) << "Create chain client";
   seq_.client_id = -1;
   seq_.client_seq_no = 0;
   connect(chain, timeout_ms);
@@ -24,6 +25,7 @@ replica_chain_client::replica_chain_client(std::shared_ptr<directory::directory_
 }
 
 replica_chain_client::~replica_chain_client() {
+	LOG(log_level::info) << "Remove chain client";
   disconnect();
 }
 

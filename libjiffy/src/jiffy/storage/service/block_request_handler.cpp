@@ -1,8 +1,11 @@
 #include "block_request_handler.h"
 #include "jiffy/utils/logger.h"
+#include "jiffy/utils/time_utils.h"
 namespace jiffy {
 namespace storage {
 using namespace std;
+using namespace utils;
+
 block_request_handler::block_request_handler(std::shared_ptr<::apache::thrift::protocol::TProtocol> prot,
                                              std::atomic<int64_t> &client_id_gen,
                                              std::map<int, std::shared_ptr<block>> &blocks)
@@ -27,7 +30,10 @@ void block_request_handler::register_client_id(const int32_t block_id, const int
 void block_request_handler::command_request(const sequence_id &seq,
                                             const int32_t block_id,
                                             const std::vector<std::string> &args) {
+	auto start = time_utils::now_us();
   blocks_[static_cast<std::size_t>(block_id)]->impl()->request(seq, args);
+	auto end = time_utils::now_us();
+	LOG(log_level::info) << "request handler took time " << end - start;
 }
 
 int32_t block_request_handler::registered_block_id() const {

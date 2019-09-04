@@ -1,5 +1,7 @@
 #include "block_response_client_map.h"
 #include "../../utils/logger.h"
+#include "../../utils/time_utils.h"
+
 
 namespace jiffy {
 namespace storage {
@@ -20,9 +22,12 @@ void block_response_client_map::remove_client(int64_t client_id) {
 void block_response_client_map::respond_client(const sequence_id &seq, const std::vector<std::string> &result) {
   if (seq.client_id == -1)
     return;
+  auto start = time_utils::now_us();
   bool found = clients_.update_fn(seq.client_id, [&](std::shared_ptr<block_response_client> &client) {
     client->response(seq, result);
   });
+  auto end = time_utils::now_us();
+  LOG(log_level::info) << "This respond client took time " << end - start;
   if (!found)
     LOG(log_level::warn) << "Cannot respond to client since client id " << seq.client_id << " is not registered...";
 }
