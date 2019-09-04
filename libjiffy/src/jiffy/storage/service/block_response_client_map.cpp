@@ -23,7 +23,6 @@ void block_response_client_map::respond_client(const sequence_id &seq, const std
   if (seq.client_id == -1)
     return;
   auto start = time_utils::now_us();
-  if (!found)
   auto found = clients_.find(seq.client_id);
   if(found != clients_.end()) {
     found->second->response(seq, result);
