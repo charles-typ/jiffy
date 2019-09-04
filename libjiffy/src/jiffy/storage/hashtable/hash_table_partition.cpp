@@ -59,6 +59,7 @@ void hash_table_partition::put(response &_return, const arg_list &args) {
     RETURN_ERR("!args_error");
   }
   auto hash = hash_slot::get(args[1]);
+  LOG(log_level::info) << "Put " << args[1] << " " << hash << " from " << name() << " " << metadata() << " " << time_utils::now_us();
   if (in_slot_range(hash) || (in_import_slot_range(hash) && args[3] == "!redirected")) {
     if (metadata_ == "exporting" && in_export_slot_range(hash)) {
       RETURN_ERR("!exporting", export_target_str_, std::to_string(export_slot_range_.first), std::to_string(merge_direction_));
@@ -167,7 +168,7 @@ void hash_table_partition::remove(response &_return, const arg_list &args) {
     RETURN_ERR("!args_error");
   }
   auto hash = hash_slot::get(args[1]);
-  LOG(log_level::info) << "Removing " << hash << " from " << name() << " " << metadata() << " " << time_utils::now_us();
+  LOG(log_level::info) << "Removing " << args[1] << " " << hash << " from " << name() << " " << metadata() << " " << time_utils::now_us();
   if (in_slot_range(hash) || (in_import_slot_range(hash) && args[2] == "!buffered")) {
     std::string old_val = "!ok";
     if (block_.erase(make_binary(args[1]))) {
@@ -190,10 +191,11 @@ void hash_table_partition::remove(response &_return, const arg_list &args) {
     RETURN_ERR("!key_not_found");
   }
    if (in_import_slot_range(hash) && args[2] == "!redirected") {
-	auto end = time_utils::now_us();
-	LOG(log_level::info) << " Return 5 " << args[1] << " " << end - start;
     std::string old_val = "!ok";
     if (block_.erase(make_binary(args[1]))) {
+
+	auto end = time_utils::now_us();
+	LOG(log_level::info) << " Return 5 " << args[1] << " " << end - start;
       RETURN_OK(old_val);
     }
     if (metadata_ == "importing" && in_import_slot_range(hash)) {
@@ -232,6 +234,7 @@ void hash_table_partition::scale_put(response &_return, const arg_list &args) {
 }
 
 void hash_table_partition::get_data_in_slot_range(response &_return, const arg_list &args) {
+  LOG(log_level::info) << "Get data in slot range " << name() << " " << metadata();
   if (args.size() != 4) {
     RETURN_ERR("!args_error");
   }
@@ -258,6 +261,7 @@ void hash_table_partition::get_data_in_slot_range(response &_return, const arg_l
 }
 
 void hash_table_partition::update_partition(response &_return, const arg_list &args) {
+  LOG(log_level::info) << "Update partition " << name() << " " << metadata();
   if (args.size() != 3) {
     RETURN_ERR("!args_error");
   }

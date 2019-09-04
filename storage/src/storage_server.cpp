@@ -10,7 +10,7 @@
 #include <boost/program_options.hpp>
 #include <ifaddrs.h>
 #include "server_storage_tracker.h"
-
+#include "jiffy/utils/thread_utils.h"
 using namespace ::jiffy::directory;
 using namespace ::jiffy::storage;
 using namespace ::jiffy::auto_scaling;
