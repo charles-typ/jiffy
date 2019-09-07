@@ -59,13 +59,15 @@ void hash_table_partition::put(response &_return, const arg_list &args) {
     RETURN_ERR("!args_error");
   }
   auto hash = hash_slot::get(args[1]);
-  LOG(log_level::info) << "Put " << args[1] << " " << hash << " from " << name() << " " << metadata() << " " << time_utils::now_us();
   if (in_slot_range(hash) || (in_import_slot_range(hash) && args[3] == "!redirected")) {
     if (metadata_ == "exporting" && in_export_slot_range(hash)) {
       RETURN_ERR("!exporting", export_target_str_, std::to_string(export_slot_range_.first), std::to_string(merge_direction_));
     }
     if (storage_size() + args[1].size() + args[2].size() > storage_capacity()) {
-      RETURN_ERR("!full");
+	    if(block_.find(make_binary(args[1])) == block_.end())
+      		RETURN_ERR("!duplicate_key");
+	    put_cache_.push_back(std::make_pair(args[1], args[2]));
+      RETURN_OK();
     }
 
     if (block_.emplace(make_binary(args[1]), make_binary(args[2])).second) {
@@ -163,57 +165,40 @@ void hash_table_partition::update(response &_return, const arg_list &args) {
 }
 
 void hash_table_partition::remove(response &_return, const arg_list &args) {
-	auto start = time_utils::now_us();
   if (!(args.size() == 2 || (args.size() == 3 && args[2] == "!redirected") || (args.size() == 3 && args[2] == "!buffered"))) {
     RETURN_ERR("!args_error");
   }
   auto hash = hash_slot::get(args[1]);
-  LOG(log_level::info) << "Removing " << args[1] << " " << hash << " from " << name() << " " << metadata() << " " << time_utils::now_us();
   if (in_slot_range(hash) || (in_import_slot_range(hash) && args[2] == "!buffered")) {
     std::string old_val = "!ok";
     if (block_.erase(make_binary(args[1]))) {
         if (metadata_ == "exporting" && in_export_slot_range(hash)) {
-	auto end = time_utils::now_us();
-	LOG(log_level::info) << " Return 1 " << args[1] << " " << end - start;
             RETURN_ERR("!exporting", export_target_str_, std::to_string(export_slot_range_.first), std::to_string(merge_direction_));
         }
-	auto end = time_utils::now_us();
-	LOG(log_level::info) << " Return 2 " << args[1] << " " << end - start;
       RETURN_OK(old_val);
     }
     if (metadata_ == "exporting" && in_export_slot_range(hash)) {
-	auto end = time_utils::now_us();
-	LOG(log_level::info) << " Return 3 " << args[1] << " " << end - start;
       RETURN_ERR("!exporting", export_target_str_, std::to_string(export_slot_range_.first), std::to_string(merge_direction_));
     }
-	auto end = time_utils::now_us();
-	LOG(log_level::info) << " Return 4 " << args[1] << " " << end - start;
     RETURN_ERR("!key_not_found");
   }
    if (in_import_slot_range(hash) && args[2] == "!redirected") {
     std::string old_val = "!ok";
     if (block_.erase(make_binary(args[1]))) {
 
-	auto end = time_utils::now_us();
-	LOG(log_level::info) << " Return 5 " << args[1] << " " << end - start;
       RETURN_OK(old_val);
     }
     if (metadata_ == "importing" && in_import_slot_range(hash)) {
       //RETURN_ERR("!full");
       remove_cache_.push_back(args[1]);
     }
-	auto end = time_utils::now_us();
-	LOG(log_level::info) << " Return 6 " << args[1] << " " << end - start;
     RETURN_ERR("!key_not_found");
   }
-	auto end = time_utils::now_us();
-	LOG(log_level::info) << " Return 7 " << args[1] << " " << end - start;
    RETURN_ERR("!block_moved");
 }
 
 void hash_table_partition::scale_remove(response &_return, const arg_list &args) {
 	
-  LOG(log_level::info) << "Scale Remove from " << name() << " " << metadata();
   for (size_t i = 1; i < args.size(); ++i) {
     if (!block_.erase(make_binary(args[i]))) {
       LOG(log_level::error) << "Unsuccessful scale remove";
@@ -224,7 +209,6 @@ void hash_table_partition::scale_remove(response &_return, const arg_list &args)
 
 void hash_table_partition::scale_put(response &_return, const arg_list &args) {
 
-  LOG(log_level::info) << "Scale Putting in " << name() << " " << metadata();
   for (size_t i = 1; i < args.size(); i += 2) {
     if (!block_.emplace(make_binary(args[i]), make_binary(args[i + 1])).second) {
       LOG(log_level::error) << "Unsuccessful scale put";
@@ -234,7 +218,6 @@ void hash_table_partition::scale_put(response &_return, const arg_list &args) {
 }
 
 void hash_table_partition::get_data_in_slot_range(response &_return, const arg_list &args) {
-  LOG(log_level::info) << "Get data in slot range " << name() << " " << metadata();
   if (args.size() != 4) {
     RETURN_ERR("!args_error");
   }
@@ -261,7 +244,6 @@ void hash_table_partition::get_data_in_slot_range(response &_return, const arg_l
 }
 
 void hash_table_partition::update_partition(response &_return, const arg_list &args) {
-  LOG(log_level::info) << "Update partition " << name() << " " << metadata();
   if (args.size() != 3) {
     RETURN_ERR("!args_error");
   }
@@ -312,6 +294,7 @@ void hash_table_partition::update_partition(response &_return, const arg_list &a
 	    if(new_name != name()) {
         std::vector<std::string> ret = {"!block_moved", export_slot_range(), std::to_string(scaling_down_), export_target_str_, std::to_string(merge_direction_)};
         client_map_.send_failure(ret);
+	buffer_put();
 	    }
       scaling_up_ = false;
       scaling_down_ = false;
@@ -343,7 +326,6 @@ void hash_table_partition::get_metadata(response &_return, const arg_list &args)
 }
 
 void hash_table_partition::run_command(response &_return, const arg_list &args) {
-	auto start = time_utils::now_us();
   auto cmd_name = args[0];
   switch (command_id(cmd_name)) {
     case hash_table_cmd_id::ht_exists:exists(_return, args);
@@ -411,8 +393,6 @@ void hash_table_partition::run_command(response &_return, const arg_list &args) 
       LOG(log_level::warn) << "Merge slot range failed: " << e.what();
     }
   }
-  auto end = time_utils::now_us();
-  LOG(log_level::info) << "This run command took time " << end - start;
 }
 
 std::size_t hash_table_partition::size() const {
@@ -501,7 +481,6 @@ bool hash_table_partition::underload() {
 }
 
 void hash_table_partition::buffer_remove() {
-  LOG(log_level::info) << "Buffer Removing from " << name() << " " << metadata();
     response ret;
     for(const auto &x : remove_cache_) {
         arg_list args;
@@ -511,6 +490,18 @@ void hash_table_partition::buffer_remove() {
         remove(ret, args);
     }
     remove_cache_.clear();
+}
+
+void hash_table_partition::buffer_put() {
+    response ret;
+    for(const auto &x : put_cache_) {
+        arg_list args;
+        args.push_back("put");
+        args.push_back(x.first);
+        args.push_back(x.second);
+        put(ret, args);
+    }
+    put_cache_.clear();
 }
 
 REGISTER_IMPLEMENTATION("hashtable", hash_table_partition);

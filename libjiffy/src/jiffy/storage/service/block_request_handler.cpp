@@ -30,10 +30,7 @@ void block_request_handler::register_client_id(const int32_t block_id, const int
 void block_request_handler::command_request(const sequence_id &seq,
                                             const int32_t block_id,
                                             const std::vector<std::string> &args) {
-	auto start = time_utils::now_us();
   blocks_[static_cast<std::size_t>(block_id)]->impl()->request(seq, args);
-	auto end = time_utils::now_us();
-	LOG(log_level::info) << "request handler took time " << end - start;
 }
 
 int32_t block_request_handler::registered_block_id() const {

@@ -79,18 +79,13 @@ void chain_module::request(sequence_id seq, const arg_list &args) {
   }
 
   std::vector<std::string> result;
-  auto start = time_utils::now_us();
   run_command(result, args);
 
-  auto end_1 = time_utils::now_us();
 
-  LOG(log_level::info) << "Run command takes time: " << end_1 - start;
   auto cmd_name = args.front();
   if (is_tail()) {
     clients().respond_client(seq, result);
     subscriptions().notify(cmd_name, args[1]); // TODO: Fix
-    auto end_2 = time_utils::now_us();
-  LOG(log_level::info) << "Respond client takes time: " << end_2 - end_1;
   } else {
     if (is_accessor(cmd_name)) {
       LOG(log_level::error) << "Invalid state: Accessor request on non-tail node";

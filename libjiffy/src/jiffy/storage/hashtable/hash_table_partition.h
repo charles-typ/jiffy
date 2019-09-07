@@ -328,6 +328,8 @@ class hash_table_partition : public chain_module {
 
   void buffer_remove();
 
+  void buffer_put();
+
 
   /* Cuckoo hash map partition */
   //hash_table_type block_;
@@ -393,6 +395,8 @@ class hash_table_partition : public chain_module {
 
   /* Buffer remove cache */
   std::vector<std::string> remove_cache_;
+
+  std::vector<std::pair<std::string, std::string>> put_cache_;
 };
 
 }
