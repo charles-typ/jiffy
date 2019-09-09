@@ -52,8 +52,10 @@ std::vector<std::string> keygenerator(std::size_t num_keys, double theta = 0, in
 
 int main() {
   size_t num_ops = 419430;
+  //size_t num_ops = 50000;
   std::vector<std::string> keys = keygenerator(num_ops);
-  std::string address = "127.0.0.1";
+  //std::string address = "127.0.0.1";
+  std::string address = "172.31.39.79";
   int service_port = 9090;
   int lease_port = 9091;
   int num_blocks = 1;

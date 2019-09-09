@@ -97,10 +97,12 @@ class dequeue_benchmark : public fifo_queue_benchmark {
 
   void run() override {
     for (size_t i = 0; i < num_clients_; ++i) {
-      workers_[i] = std::thread([i, this]() {
         for (size_t j = 0; j < num_ops_; ++j) {
           clients_[i]->enqueue(data_);
         }
+    }
+    for (size_t i = 0; i < num_clients_; ++i) {
+      workers_[i] = std::thread([i, this]() {
         auto bench_begin = time_utils::now_us();
         uint64_t tot_time = 0, t0, t1 = bench_begin;
         size_t j;

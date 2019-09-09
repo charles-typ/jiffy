@@ -15,7 +15,6 @@ replica_chain_client::replica_chain_client(std::shared_ptr<directory::directory_
                                            const directory::replica_chain &chain,
                                            const command_map &OPS,
                                            int timeout_ms) : fs_(fs), path_(path), in_flight_(false) {
-	LOG(log_level::info) << "Create chain client";
   seq_.client_id = -1;
   seq_.client_seq_no = 0;
   connect(chain, timeout_ms);
@@ -25,7 +24,6 @@ replica_chain_client::replica_chain_client(std::shared_ptr<directory::directory_
 }
 
 replica_chain_client::~replica_chain_client() {
-	LOG(log_level::info) << "Remove chain client";
   disconnect();
 }
 
@@ -69,14 +67,11 @@ std::vector<std::string> replica_chain_client::recv_response() {
     throw std::logic_error("SEQ: Expected=" + std::to_string(seq_.client_seq_no) + " Received=" + std::to_string(rseq));
   } 
   if(rseq == -2) {
-	  auto start =  time_utils::now_us();
     try {
 	    std::vector<std::string> real_result;
 	    response_reader_.recv_response(real_result);
 	    ret.insert(std::end(ret), std::begin(real_result), std::end(real_result));
-    } catch(apache::thrift::transport::TTransportException &e) { LOG(log_level::info) << "Catch exception";}
-    auto end = time_utils::now_us();
-    LOG(log_level::info) << "Receiving next response " << end -  start;
+    } catch(apache::thrift::transport::TTransportException &e) { LOG(log_level::info) << "Catch exception" << e.what();}
   }
   seq_.client_seq_no++;
   in_flight_ = false;
@@ -88,12 +83,8 @@ std::vector<std::string> replica_chain_client::run_command(const std::vector<std
   bool retry = false;
   while (response.empty()) {
     try {
-	    auto start  = time_utils::now_us();
       send_command(args);
-      auto end_1 = time_utils::now_us();
       response = recv_response();
-      auto end_2 = time_utils::now_us();
-      LOG(log_level::info) << end_1 - start << " " << end_2 - end_1;
       if (retry && response[0] == "!duplicate_key") { // TODO: This is hash table specific logic
         response[0] = "!ok";
       }

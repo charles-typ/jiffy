@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <thread>
 #include <utility>
+#include "jiffy/utils/logger.h"
+#include "jiffy/utils/time_utils.h"
 
 namespace jiffy {
 namespace storage {
@@ -53,8 +55,12 @@ std::string fifo_queue_client::dequeue() {
   bool redo;
   do {
     try {
+//	auto start = time_utils::now_us();
       _return = blocks_[dequeue_partition_]->run_command(args);
+//	auto end_1 = time_utils::now_us();
       handle_redirect(_return, args);
+//	auto end_2 = time_utils::now_us();
+//	LOG(log_level::info) << "Dequeue time like this: " << end_1 - start << " " << end_2 - end_1;
       redo = false;
     } catch (redo_error &e) {
       redo = true;

@@ -44,6 +44,7 @@ class file_reader: public file_client {
    * @param _return Response to be collected
    */
   void handle_redirect(std::vector<std::string> &_return, const std::vector<std::string> &args) override;
+  void handle_redirect_new(std::vector<std::string> &_return, const std::vector<std::string> &args);
 };
 
 }

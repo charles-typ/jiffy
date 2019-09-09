@@ -101,10 +101,12 @@ class read_benchmark : public file_benchmark {
 
   void run() override {
     for (size_t i = 0; i < num_clients_; ++i) {
-      workers_[i] = std::thread([i, this]() {
         for (size_t j = 0; j < num_ops_; ++j) {
           writers_[i]->write(data_);
         }
+    }
+    for (size_t i = 0; i < num_clients_; ++i) {
+      workers_[i] = std::thread([i, this]() {
         auto bench_begin = time_utils::now_us();
         uint64_t tot_time = 0, t0, t1 = bench_begin;
         size_t j;
@@ -156,6 +158,7 @@ int main() {
 
       jiffy_client client(address, service_port, lease_port);
       writer_list file_writers(static_cast<size_t>(num_clients), nullptr);
+      reader_list file_readers(static_cast<size_t>(num_clients), nullptr);
       for (int j = 0; j < num_clients; ++j) {
         file_writers[j] = client.open_or_create_file(path, backing_path, num_blocks, chain_length);
       }
@@ -164,7 +167,6 @@ int main() {
       if (op_type == "write") {
         benchmark = std::make_shared<write_benchmark>(file_writers, data_size, num_clients, num_ops);
       } else if (op_type == "read") {
-        reader_list file_readers(static_cast<size_t>(num_clients), nullptr);
         for (int j = 0; j < num_clients; ++j) {
           file_readers[j] = client.open_file_reader(path);
         }

@@ -16,13 +16,14 @@ using namespace ::jiffy::utils;
 using namespace ::apache::thrift;
 namespace ts = std::chrono;
 int main() {
-  std::string address = "127.0.0.1";
+  //std::string address = "127.0.0.1";
+  std::string address = "172.31.39.79";
   int service_port = 9090;
   int lease_port = 9091;
   int num_blocks = 1;
   int chain_length = 1;
   size_t num_ops = 419430;
-  size_t data_size = 102400;
+  size_t data_size = 102401;
   std::string op_type = "file_auto_scaling";
   std::string path = "/tmp";
   std::string backing_path = "local://tmp";
@@ -42,6 +43,8 @@ int main() {
   jiffy_client client(address, service_port, lease_port);
   std::shared_ptr<file_writer>
       file_client_1 = client.open_or_create_file(path, backing_path, num_blocks, chain_length);
+  std::shared_ptr<file_reader>
+      file_client_2 = client.open_file_reader(path);
   std::string data_(data_size, 'x');
   std::chrono::milliseconds periodicity_ms_(1000);
   std::atomic_bool stop_{false};
@@ -69,23 +72,23 @@ int main() {
     }
     out.close();
   });
-  auto read_worker_ = std::thread([&] {
-    uint64_t read_tot_time = 0, read_t0 = 0, read_t1 = 0;
-    std::shared_ptr<file_reader>
-        file_client_2 = client.open_file_reader(path);
-    std::ofstream out2("read_latency.trace");
-    while (!stop2_.load()) {
-      for (size_t k = 0; k < num_ops; ++k) {
-        read_t0 = time_utils::now_us();
-        file_client_2->read(data_size);
-        read_t1 = time_utils::now_us();
-        read_tot_time = (read_t1 - read_t0);
-        auto cur_epoch = ts::duration_cast<ts::milliseconds>(ts::system_clock::now().time_since_epoch()).count();
-        out2 << cur_epoch << " " << read_tot_time << " read" << std::endl;
-      }
-    }
-    out2.close();
-  });
+ // auto read_worker_ = std::thread([&] {
+ //   uint64_t read_tot_time = 0, read_t0 = 0, read_t1 = 0;
+ //   std::shared_ptr<file_reader>
+ //       file_client_2 = client.open_file_reader(path);
+ //   std::ofstream out2("read_latency.trace");
+ //   while (!stop2_.load()) {
+ //     for (size_t k = 0; k < num_ops; ++k) {
+ //       read_t0 = time_utils::now_us();
+ //       //file_client_2->read(data_size);
+ //       read_t1 = time_utils::now_us();
+ //       read_tot_time = (read_t1 - read_t0);
+ //       auto cur_epoch = ts::duration_cast<ts::milliseconds>(ts::system_clock::now().time_since_epoch()).count();
+ //       out2 << cur_epoch << " " << read_tot_time << " read" << std::endl;
+ //     }
+ //   }
+ //   out2.close();
+ // });
 
   std::ofstream out("latency.trace");
   uint64_t write_tot_time = 0, write_t0 = 0, write_t1 = 0;
@@ -95,15 +98,24 @@ int main() {
     write_t1 = time_utils::now_us();
     write_tot_time = write_t1 - write_t0;
     auto cur_epoch = ts::duration_cast<ts::milliseconds>(ts::system_clock::now().time_since_epoch()).count();
-    out << cur_epoch << " " << write_tot_time << " us";
+    out << cur_epoch << " " << write_tot_time << " write";
+    out << std::endl;
+  }
+  for (j = 0; j < num_ops; ++j) {
+    write_t0 = time_utils::now_us();
+    file_client_2->read(data_.size());
+    write_t1 = time_utils::now_us();
+    write_tot_time = write_t1 - write_t0;
+    auto cur_epoch = ts::duration_cast<ts::milliseconds>(ts::system_clock::now().time_since_epoch()).count();
+    out << cur_epoch << " " << write_tot_time << " read";
     out << std::endl;
   }
   stop_.store(true);
   if (worker_.joinable())
     worker_.join();
   stop2_.store(true);
-  if (read_worker_.joinable())
-    read_worker_.join();
+ // if (read_worker_.joinable())
+ //   read_worker_.join();
   client.remove(path);
   return 0;
 }

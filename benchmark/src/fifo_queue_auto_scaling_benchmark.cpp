@@ -16,7 +16,8 @@ using namespace ::jiffy::utils;
 using namespace ::apache::thrift;
 namespace ts = std::chrono;
 int main() {
-  std::string address = "127.0.0.1";
+//  std::string address = "127.0.0.1";
+  std::string address = "172.31.39.79";
   int service_port = 9090;
   int lease_port = 9091;
   int num_blocks = 1;

@@ -3,7 +3,7 @@
 #include "jiffy/storage/partition_manager.h"
 #include "jiffy/storage/fifoqueue/fifo_queue_ops.h"
 #include "jiffy/auto_scaling/auto_scaling_client.h"
-
+#include "jiffy/utils/time_utils.h"
 namespace jiffy {
 namespace storage {
 
@@ -61,7 +61,11 @@ void fifo_queue_partition::dequeue(response &_return, const arg_list &args) {
   if (args.size() != 1) {
     RETURN_ERR("!args_error");
   }
+
+//  auto start = time_utils::now_us();
   auto ret = partition_.at(head_);
+//  auto end = time_utils::now_us();
+//  LOG(log_level::info) << "Time for dequeue " << end - start;
   if (ret.first) {
     head_ += (string_array::METADATA_LEN + ret.second.size());
     RETURN_OK(ret.second);

@@ -41,14 +41,10 @@ void hash_table_client::put(const std::string &key, const std::string &value) {
   bool redo;
   do {
     try {
-	auto start = time_utils::now_us();
       _return = blocks_[block_id(key)]->run_command(args);
-	auto end_1 = time_utils::now_us();
       handle_redirect(_return, args);
-	auto end_2 = time_utils::now_us();
       redo = false;
       redo_times_ = 0;
-      LOG(log_level::info) << "Putting " << key << " " << end_1 - start << " "  << end_2 - end_1 << " " << init;
     } catch (redo_error &e) {
       redo = true;
     }
@@ -71,6 +67,7 @@ std::string hash_table_client::get(const std::string &key) {
     }
   } while (redo);
   THROW_IF_NOT_OK(_return);
+  if(_return[0] == "!key_not_found") return "!ok";
   return _return[1];
 }
 
@@ -93,18 +90,13 @@ std::string hash_table_client::update(const std::string &key, const std::string 
 }
 
 std::string hash_table_client::remove(const std::string &key) {
-	auto init = time_utils::now_us();
   std::vector<std::string> _return;
   std::vector<std::string> args{"remove", key};
   bool redo;
   do {
     try {
-	    auto start = time_utils::now_us();
       _return = blocks_[block_id(key)]->run_command(args);
-      auto end_1 = time_utils::now_us();
       handle_redirect(_return, args);
-      auto end_2 = time_utils::now_us();
-      LOG(log_level::info) << "Remove " << key << " " << end_1 - start << " "  << end_2 - end_1 << " " << init;
       redo = false;
       redo_times_ = 0;
     } catch (redo_error &e) {
@@ -128,7 +120,6 @@ void hash_table_client::handle_redirect(std::vector<std::string> &_return, const
         auto slot_range = string_utils::split(_return[1], '_', 2);
         if (!std::stoi(_return[2])) {  // split
 
-      LOG(log_level::info) << "Split block removed ";
           auto it = redirect_blocks_.find(_return[3]);
           if (it != redirect_blocks_.end()) {
             blocks_.emplace(std::make_pair(std::stoi(slot_range[0]), it->second));
@@ -143,7 +134,6 @@ void hash_table_client::handle_redirect(std::vector<std::string> &_return, const
 	        if(_return[0] == "!block_moved")
 		        redo_flag = true;
         } else {
-      LOG(log_level::info) << "Merge block removed ";
           auto it = blocks_.find(std::stoi(slot_range[0]));
           if (std::stoi(_return[4])) {
             auto client = std::next(it)->second;
@@ -172,7 +162,6 @@ void hash_table_client::handle_redirect(std::vector<std::string> &_return, const
         redirect_blocks_.emplace(std::make_pair(_return[1], client));
         _return = client->run_command_redirected(args);
       } else {
-      LOG(log_level::info) << "Exporting ";
         if(std::stoi(_return[3]))
           _return = std::next(merge_it)->second->run_command_redirected(args);
         else

@@ -1,7 +1,8 @@
 #include "file_reader.h"
-
+#include "jiffy/utils/time_utils.h"
 #include <utility>
 #include "jiffy/utils/string_utils.h"
+#include "jiffy/utils/logger.h"
 
 namespace jiffy {
 namespace storage {
@@ -14,14 +15,19 @@ file_reader::file_reader(std::shared_ptr<jiffy::directory::directory_interface> 
                          int timeout_ms) : file_client(std::move(fs), path, status, timeout_ms) {
 }
 
+
 std::string file_reader::read(const std::size_t size) {
   std::vector<std::string> _return;
   std::vector<std::string> args = {"read", std::to_string(cur_offset_), std::to_string(size)};
   bool redo;
   do {
     try {
+//	auto start  = time_utils::now_us();
       _return = blocks_[block_id()]->run_command(args);
-      handle_redirect(_return, args);
+//	auto end_1  = time_utils::now_us();
+      handle_redirect_new(_return, args);
+//	auto end_2  = time_utils::now_us();
+//	LOG(log_level::info) << "Read takes time: " << end_1 - start << " " << end_2 - end_1;
       redo = false;
     } catch (redo_error &e) {
       redo = true;
@@ -31,7 +37,7 @@ std::string file_reader::read(const std::size_t size) {
   return _return[1];
 }
 
-void file_reader::handle_redirect(std::vector<std::string> &_return, const std::vector<std::string> &args) {
+void file_reader::handle_redirect_new(std::vector<std::string> &_return, const std::vector<std::string> &args) {
   if (_return[0] == "!ok") {
     cur_offset_ += _return[1].size();
     return;
@@ -60,6 +66,8 @@ void file_reader::handle_redirect(std::vector<std::string> &_return, const std::
     _return[1] = result;
   }
 }
+
+void file_reader::handle_redirect(std::vector<std::string> &_return, const std::vector<std::string> &args) {}
 
 }
 }

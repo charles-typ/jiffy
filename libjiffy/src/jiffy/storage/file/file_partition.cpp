@@ -4,6 +4,7 @@
 #include "jiffy/storage/file/file_ops.h"
 #include "jiffy/auto_scaling/auto_scaling_client.h"
 #include <thread>
+#include "jiffy/utils/time_utils.h"
 
 namespace jiffy {
 namespace storage {
@@ -64,7 +65,10 @@ void file_partition::read(response& _return, const arg_list &args) {
   auto pos = std::stoi(args[1]);
   auto size = std::stoi(args[2]);
   if (pos < 0) throw std::invalid_argument("read position invalid");
+  //auto start = time_utils::now_us();
   auto ret = partition_.read(static_cast<std::size_t>(pos), static_cast<std::size_t>(size));
+  //auto end = time_utils::now_us();
+  //LOG(log_level::info) << " Read took time " << end - start;
   if (ret.first) {
     RETURN_OK(ret.second);
   }
