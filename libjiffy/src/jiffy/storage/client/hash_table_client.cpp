@@ -25,8 +25,10 @@ hash_table_client::hash_table_client(std::shared_ptr<directory::directory_interf
 void hash_table_client::refresh() {
   status_ = fs_->dstatus(path_);
   blocks_.clear();
+  //LOG(log_level::info) << "Refreshing";
   for (auto &block: status_.data_blocks()) {
     if (block.metadata != "split_importing" && block.metadata != "importing") {
+//	    LOG(log_level::info) <<  block.name;
       blocks_.emplace(std::make_pair(static_cast<int32_t>(std::stoi(utils::string_utils::split(block.name, '_')[0])),
                                      std::make_shared<replica_chain_client>(fs_, path_, block, HT_OPS, timeout_ms_)));
     }
@@ -58,7 +60,9 @@ std::string hash_table_client::get(const std::string &key) {
   bool redo;
   do {
     try {
+	    //LOG(log_level::info) << key << " " << block_id(key);
       _return = blocks_[block_id(key)]->run_command(args);
+      //LOG(log_level::info) << "this get returns " << _return[0];
       handle_redirect(_return, args);
       redo = false;
       redo_times_ = 0;
@@ -66,7 +70,7 @@ std::string hash_table_client::get(const std::string &key) {
       redo = true;
     }
   } while (redo);
-  THROW_IF_NOT_OK(_return);
+  //THROW_IF_NOT_OK(_return);
   if(_return[0] == "!key_not_found") return "!ok";
   return _return[1];
 }
@@ -117,6 +121,8 @@ void hash_table_client::handle_redirect(std::vector<std::string> &_return, const
 	  bool redo_flag = false;
     if (_return[0] == "!block_moved") {
       try {
+	      if(_return.size()  == 1) 
+		      throw std::logic_error("do some refreshing");
         auto slot_range = string_utils::split(_return[1], '_', 2);
         if (!std::stoi(_return[2])) {  // split
 
@@ -134,8 +140,11 @@ void hash_table_client::handle_redirect(std::vector<std::string> &_return, const
 	        if(_return[0] == "!block_moved")
 		        redo_flag = true;
         } else {
+		auto prev = block_id(args[1]);
           auto it = blocks_.find(std::stoi(slot_range[0]));
           if (std::stoi(_return[4])) {
+		  if(it == blocks_.end())
+			  throw std::logic_error("do some refreshing 2");
             auto client = std::next(it)->second;
             blocks_.erase(std::next(it));
             blocks_.erase(it);
@@ -144,6 +153,8 @@ void hash_table_client::handle_redirect(std::vector<std::string> &_return, const
               blocks_.erase(it);
           }
 	        redo_flag = true;
+		if(block_id(args[1]) == prev)
+			throw std::logic_error("merge error occurs");
         }
       } catch (std::exception &e) {
         LOG(log_level::error) << "This refresh should never be called " << e.what();

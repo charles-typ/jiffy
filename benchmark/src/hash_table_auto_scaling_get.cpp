@@ -55,7 +55,7 @@ int main() {
   //size_t num_ops = 50000;
   std::vector<std::string> keys = keygenerator(num_ops);
   //std::string address = "127.0.0.1";
-  std::string address = "172.31.39.79";
+  std::string address = "172.31.44.97";
   int service_port = 9090;
   int lease_port = 9091;
   int num_blocks = 1;
@@ -86,13 +86,14 @@ int main() {
       for (size_t k = 0; k < num_ops; ++k) {
         auto key = keys[k];
         get_t0 = time_utils::now_us();
-        ht_client->get(key);
+        auto ret = ht_client->get(key);
         get_t1 = time_utils::now_us();
         get_tot_time = (get_t1 - get_t0);
         auto cur_epoch = ts::duration_cast<ts::milliseconds>(ts::system_clock::now().time_since_epoch()).count();
         out << cur_epoch << " " << get_tot_time << " get " << key << std::endl;
       }
     } catch (jiffy::directory::directory_service_exception &e) {
+	    LOG(log_level::info) << "error " << e.what();
       break;
     }
   }
