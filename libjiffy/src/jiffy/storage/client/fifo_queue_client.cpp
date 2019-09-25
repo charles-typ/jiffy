@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <thread>
 #include <utility>
+#include "jiffy/utils/logger.h"
 
 namespace jiffy {
 namespace storage {
@@ -37,6 +38,7 @@ void fifo_queue_client::enqueue(const std::string &item) {
   bool redo;
   do {
     try {
+      //LOG(log_level::info) << "Enqueue " << item.size();
       _return = blocks_[enqueue_partition_]->run_command(args);
       handle_redirect(_return, args);
       redo = false;
@@ -53,14 +55,19 @@ std::string fifo_queue_client::dequeue() {
   bool redo;
   do {
     try {
+      LOG(log_level::info) << "dequeue 0";
       _return = blocks_[dequeue_partition_]->run_command(args);
+      LOG(log_level::info) << "dequeue 1";
       handle_redirect(_return, args);
+      LOG(log_level::info) << "dequeue 2";
       redo = false;
     } catch (redo_error &e) {
       redo = true;
     }
   } while (redo);
-  THROW_IF_NOT_OK(_return);
+  //THROW_IF_NOT_OK(_return);
+  if(_return[0] == "!msg_not_found") return "!msg_not_found";
+  LOG(log_level::info) << "dequeue 3";
   return _return[1];
 }
 
@@ -85,12 +92,15 @@ void fifo_queue_client::handle_redirect(std::vector<std::string> &_return, const
   auto cmd_name = args.front();
 
   if (_return[0] == "!ok") {
+    //LOG(log_level::info) << "Enqueue ok " << args[1];
     if (cmd_name == "read_next") read_offset_ += (string_array::METADATA_LEN + _return[1].size());
     return;
   } else if (_return[0] == "!redo") {
+    //LOG(log_level::info) << "Redo";
     throw redo_error();
   } else if (_return[0] == "!split_enqueue") {
     do {
+      //LOG(log_level::info) << "Split enqueue 0 " << args[1];
       auto remaining_data_len = std::stoi(_return[1]);
       auto data = args[1];
       auto remaining_data = data.substr(data.size() - remaining_data_len, remaining_data_len);
@@ -103,6 +113,7 @@ void fifo_queue_client::handle_redirect(std::vector<std::string> &_return, const
       do {
         _return = blocks_[enqueue_partition_]->run_command({"enqueue", remaining_data});
       } while (_return[0] == "!redo");
+      //LOG(log_level::info) << "Split enqueue 1 " << args[1];
     } while (_return[0] == "!split_enqueue");
   } else if (_return[0] == "!split_dequeue") {
     std::string result;

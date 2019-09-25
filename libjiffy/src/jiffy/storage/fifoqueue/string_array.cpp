@@ -79,6 +79,7 @@ std::pair<bool, std::string> string_array::push_back(const std::string &item) {
 }
 
 const std::pair<bool, std::string> string_array::at(std::size_t offset) const {
+  LOG(log_level::info) << offset << " " << last_element_offset_ << " " << max_ << " " << split_string_;
   if (offset > last_element_offset_ || empty()) {
     if (max_ - offset < METADATA_LEN && split_string_)
       return std::make_pair(false, "");
