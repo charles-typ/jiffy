@@ -66,6 +66,24 @@ std::vector<std::string> replica_chain_client::recv_response() {
   if (rseq != seq_.client_seq_no) {
     throw std::logic_error("SEQ: Expected=" + std::to_string(seq_.client_seq_no) + " Received=" + std::to_string(rseq));
   }
+  if(ret.size() == 1 && ret[0].c_str()[0] != '!') {
+    int num_parts = std::stoi(ret[0]);
+    LOG(log_level::info) << "Num parts " << num_parts;
+    ret.clear();
+    response_reader_.recv_response(ret);
+    for(const auto & x : ret) {
+      LOG(log_level::info) << "Status : " << x;
+    }
+    std::string data;
+    for(int i = 0; i < num_parts; i++) {
+      std::vector<std::string> data_partial;
+      response_reader_.recv_response(data_partial);
+      LOG(log_level::info) << "Loop data length received " << data_partial[0].size();
+      data += data_partial[0];
+    }
+    LOG(log_level::info) << "Data length received " << data.size();
+    ret.insert(ret.begin() + 1, data);
+  }
   seq_.client_seq_no++;
   in_flight_ = false;
   return ret;

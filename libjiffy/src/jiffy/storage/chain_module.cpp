@@ -79,11 +79,44 @@ void chain_module::request(sequence_id seq, const arg_list &args) {
   }
 
   std::vector<std::string> result;
+  if(args[0] == "dequeue") {
+    LOG(log_level::info) << "Running dequeue " << is_tail();
+  }
   run_command(result, args);
-
+  if(args[0] == "dequeue") {
+    LOG(log_level::info) << "Finish Running dequeue " << is_tail();
+  }
   auto cmd_name = args.front();
   if (is_tail()) {
-    clients().respond_client(seq, result);
+    const std::size_t max_data_size = 100 * 1024;
+    std::vector<std::string> result_partial;
+    if(args[0] == "dequeue" && (result.size() >= 2 && result[1].size() > max_data_size)) {
+      LOG(log_level::info) << "This dequeue exceeds the size";
+      auto data_to_send = result[1];
+      std::size_t num_response = data_to_send.size() / max_data_size + (data_to_send.size() % max_data_size != 0);
+      clients().respond_client(seq, std::vector<std::string>{std::to_string(num_response)});
+      if(result.size() == 3)
+        clients().respond_client(seq, std::vector<std::string>{result[0], result[2]});
+      else
+        clients().respond_client(seq, std::vector<std::string>{result[0]});
+      for(std::size_t i = 0; i < num_response; i++) {
+        LOG(log_level::info) << "Here 1";
+        auto data_size = i * max_data_size + max_data_size > result[1].size() ? result[1].size() % max_data_size : max_data_size;
+        LOG(log_level::info) << "Here 2";
+        auto data_partial = result[1].substr(i * max_data_size, data_size);
+        LOG(log_level::info) << "Here 3";
+        result_partial.push_back(data_partial);
+        LOG(log_level::info) << "Here 4";
+        LOG(log_level::info) << "Sending partial data " << data_partial.size();
+        LOG(log_level::info) << "Here 5";
+        clients().respond_client(seq, result_partial);
+        LOG(log_level::info) << "Here 6";
+        result_partial.pop_back();
+        LOG(log_level::info) << "Here 7";
+      }
+    } else {
+      clients().respond_client(seq, result);
+    }
     subscriptions().notify(cmd_name, args[1]); // TODO: Fix
   } else {
     if (is_accessor(cmd_name)) {
@@ -111,7 +144,28 @@ void chain_module::chain_request(const sequence_id &seq, const arg_list &args) {
   run_command(result, args);
 
   if (is_tail()) {
-    clients().respond_client(seq, result);
+    const std::size_t max_data_size = 512 * 1024;
+    std::vector<std::string> result_partial;
+    if(args[0] == "dequeue" && (result.size() >= 2 && result[1].size() > max_data_size)) {
+      LOG(log_level::info) << "This dequeue exceeds the size";
+      auto data_to_send = result[1];
+      std::size_t num_response = data_to_send.size() / max_data_size + (data_to_send.size() % max_data_size != 0);
+      clients().respond_client(seq, std::vector<std::string>{std::to_string(num_response)});
+      if(result.size() == 3)
+        clients().respond_client(seq, std::vector<std::string>{result[0], result[2]});
+      else
+        clients().respond_client(seq, std::vector<std::string>{result[0]});
+      for(std::size_t i = 0; i < num_response; i++) {
+        auto data_size = i * max_data_size + max_data_size > result[1].size() ? result[1].size() % max_data_size : max_data_size;
+        auto data_partial = result[1].substr(i * max_data_size, data_size);
+        result_partial.push_back(data_partial);
+        LOG(log_level::info) << "Sending partial data " << data_partial.size();
+        clients().respond_client(seq, result_partial);
+        result_partial.pop_back();
+      }
+    } else {
+      clients().respond_client(seq, result);
+    }
     subscriptions().notify(cmd_name, args[1]); // TODO: Fix
     ack(seq);
   } else {

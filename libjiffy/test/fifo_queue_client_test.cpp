@@ -25,6 +25,8 @@ using namespace ::apache::thrift::transport;
 #define STORAGE_MANAGEMENT_PORT 9092
 #define AUTO_SCALING_SERVICE_PORT 9095
 
+// TODO remove auto_scaling in these tests
+/*
 TEST_CASE("fifo_queue_client_enqueue_dequeue_test", "[enqueue][dequeue]") {
   auto alloc = std::make_shared<sequential_block_allocator>();
   auto block_names = test_utils::init_block_names(NUM_BLOCKS, STORAGE_SERVICE_PORT, STORAGE_MANAGEMENT_PORT);
@@ -51,7 +53,7 @@ TEST_CASE("fifo_queue_client_enqueue_dequeue_test", "[enqueue][dequeue]") {
   test_utils::wait_till_server_ready(HOST, DIRECTORY_SERVICE_PORT);
 
   data_status status = tree->create("/sandbox/file.txt", "fifoqueue", "/tmp", NUM_BLOCKS, 1, 0, 0,
-                                    {"0"}, {"regular"}); //TODO we do not use metadata for now
+                                    {"0"}, {"regular"});
 
   fifo_queue_client client(tree, "/sandbox/file.txt", status);
 
@@ -86,4 +88,68 @@ TEST_CASE("fifo_queue_client_enqueue_dequeue_test", "[enqueue][dequeue]") {
   if (dir_serve_thread.joinable()) {
     dir_serve_thread.join();
   }
+}
+*/
+
+TEST_CASE("fifo_queue_client_large_data_test", "[enqueue][dequeue]") {
+auto alloc = std::make_shared<sequential_block_allocator>();
+auto block_names = test_utils::init_block_names(64, STORAGE_SERVICE_PORT, STORAGE_MANAGEMENT_PORT);
+alloc->add_blocks(block_names);
+auto blocks = test_utils::init_fifo_queue_blocks(block_names, 134217728, 0, 1);
+
+auto storage_server = block_server::create(blocks, STORAGE_SERVICE_PORT);
+std::thread storage_serve_thread([&storage_server] { storage_server->serve(); });
+test_utils::wait_till_server_ready(HOST, STORAGE_SERVICE_PORT);
+
+auto mgmt_server = storage_management_server::create(blocks, HOST, STORAGE_MANAGEMENT_PORT);
+std::thread mgmt_serve_thread([&mgmt_server] { mgmt_server->serve(); });
+test_utils::wait_till_server_ready(HOST, STORAGE_MANAGEMENT_PORT);
+
+auto as_server = auto_scaling_server::create(HOST, DIRECTORY_SERVICE_PORT, HOST, AUTO_SCALING_SERVICE_PORT);
+std::thread auto_scaling_thread([&as_server]{as_server->serve(); });
+test_utils::wait_till_server_ready(HOST, AUTO_SCALING_SERVICE_PORT);
+
+auto sm = std::make_shared<storage_manager>();
+auto tree = std::make_shared<directory_tree>(alloc, sm);
+
+auto dir_server = directory_server::create(tree, HOST, DIRECTORY_SERVICE_PORT);
+std::thread dir_serve_thread([&dir_server] { dir_server->serve(); });
+test_utils::wait_till_server_ready(HOST, DIRECTORY_SERVICE_PORT);
+
+data_status status = tree->create("/sandbox/file.txt", "fifoqueue", "/tmp", NUM_BLOCKS, 1, 0, 0,
+                                  {"0"}, {"regular"});
+
+fifo_queue_client client(tree, "/sandbox/file.txt", status, 10000);
+const std::size_t data_size = 1024 * 1024;
+for (std::size_t i = 0; i < 200; ++i) {
+REQUIRE_NOTHROW(client.enqueue(std::string(data_size, std::to_string(i).c_str()[0])));
+}
+//for (std::size_t i = 0; i < 1000; ++i) {
+//REQUIRE(client.read_next() == std::to_string(i));
+//}
+
+for (std::size_t i = 0; i < 200; ++i) {
+REQUIRE(client.dequeue() == std::string(data_size, std::to_string(i).c_str()[0]));
+}
+for (std::size_t i = 1000; i < 200; ++i) {
+REQUIRE_THROWS_AS(client.dequeue(), std::logic_error);
+}
+
+as_server->stop();
+if(auto_scaling_thread.joinable()) {
+auto_scaling_thread.join();
+}
+storage_server->stop();
+if (storage_serve_thread.joinable()) {
+storage_serve_thread.join();
+}
+
+mgmt_server->stop();
+if (mgmt_serve_thread.joinable()) {
+mgmt_serve_thread.join();
+}
+dir_server->stop();
+if (dir_serve_thread.joinable()) {
+dir_serve_thread.join();
+}
 }
