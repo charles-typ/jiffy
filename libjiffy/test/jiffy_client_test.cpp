@@ -26,7 +26,7 @@ using namespace jiffy::utils;
 #define STORAGE_MANAGEMENT_PORT 9093
 #define LEASE_PERIOD_MS 100
 #define LEASE_PERIOD_US (LEASE_PERIOD_MS * 1000)
-
+/*
 void test_hash_table_ops(std::shared_ptr<hash_table_client> table) {
   for (size_t i = 0; i < 1000; i++) {
     REQUIRE_NOTHROW(table->put(std::to_string(i), std::to_string(i)));
@@ -385,7 +385,7 @@ TEST_CASE("jiffy_client_close_test", "[put][get][update][remove]") {
     lease_serve_thread.join();
   }
 }
-
+*/
 TEST_CASE("jiffy_client_notification_test", "[put][get][update][remove]") {
   auto alloc = std::make_shared<sequential_block_allocator>();
   auto block_names = test_utils::init_block_names(NUM_BLOCKS,
@@ -423,7 +423,9 @@ TEST_CASE("jiffy_client_notification_test", "[put][get][update][remove]") {
     std::string op1 = "put", op2 = "remove";
     std::string key = "key1", value = "value1";
 
-    client.fs()->create("/a/file.txt", "hashtable", "/tmp", 1, 1, 0, 0, {"0_65536"}, {"regular"});
+      std::map<std::string, std::string> conf;
+        conf.emplace("hashtable.auto_scale", "false");
+    client.fs()->create("/a/file.txt", "hashtable", "/tmp", 3, 1, 0, 0, {"0_16384", "16384_32768", "32768_65536"}, {"regular","regular","regular"}, conf);
     auto n1 = client.listen("/a/file.txt");
     auto n2 = client.listen("/a/file.txt");
     auto n3 = client.listen("/a/file.txt");
@@ -479,7 +481,7 @@ TEST_CASE("jiffy_client_notification_test", "[put][get][update][remove]") {
     lease_serve_thread.join();
   }
 }
-
+/**
 TEST_CASE("jiffy_client_chain_replication_test", "[put][get][update][remove]") {
   auto alloc = std::make_shared<sequential_block_allocator>();
   auto block_names = test_utils::init_block_names(NUM_BLOCKS,
@@ -539,3 +541,4 @@ TEST_CASE("jiffy_client_chain_replication_test", "[put][get][update][remove]") {
     lease_serve_thread.join();
   }
 }
+*/
