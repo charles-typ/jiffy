@@ -16,13 +16,13 @@ using namespace ::jiffy::utils;
 using namespace ::apache::thrift;
 namespace ts = std::chrono;
 int main() {
-  std::string address = "127.0.0.1";
+  std::string address = "172.31.18.252";
   int service_port = 9090;
   int lease_port = 9091;
   int num_blocks = 1;
   int chain_length = 1;
-  size_t num_ops = 419430;
-  size_t data_size = 102400;
+  size_t num_ops = 3200000;
+  size_t data_size = 1000;
   std::string op_type = "fifo_queue_auto_scaling";
   std::string path = "/tmp";
   std::string backing_path = "local://tmp";
@@ -43,7 +43,7 @@ int main() {
   std::shared_ptr<fifo_queue_client>
       fq_client = client.open_or_create_fifo_queue(path, backing_path, num_blocks, chain_length);
   std::string data_(data_size, 'x');
-  std::chrono::milliseconds periodicity_ms_(1000);
+  std::chrono::milliseconds periodicity_ms_(100);
   std::atomic_bool stop_{false};
   std::size_t j = 0;
   auto worker_ = std::thread([&] {
@@ -53,7 +53,7 @@ int main() {
       try {
         auto cur_epoch = ts::duration_cast<ts::milliseconds>(ts::system_clock::now().time_since_epoch()).count();
         out << cur_epoch;
-        out << "\t" << j * 100 * 1024;
+        out << "\t" << j * data_size;
         out << std::endl;
       } catch (std::exception &e) {
         LOG(log_level::error) << "Exception: " << e.what();

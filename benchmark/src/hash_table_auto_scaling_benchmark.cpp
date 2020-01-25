@@ -50,9 +50,9 @@ std::vector<std::string> keygenerator(std::size_t num_keys, double theta = 0, in
 }
 
 int main() {
-  size_t num_ops = 419430;
+  size_t num_ops = 2690000;
   std::vector<std::string> keys = keygenerator(num_ops);
-  std::string address = "127.0.0.1";
+  std::string address = "172.31.18.252";
   int service_port = 9090;
   int lease_port = 9091;
   int num_blocks = 1;
@@ -75,7 +75,7 @@ int main() {
   jiffy_client client(address, service_port, lease_port);
   std::shared_ptr<hash_table_client>
       ht_client = client.open_or_create_hash_table(path, backing_path, num_blocks, chain_length);
-  uint64_t periodicity_ms_ = 1000;
+  uint64_t periodicity_ms_ = 100;
   uint64_t put_tot_time = 0, put_t0 = 0, put_t1 = 0;
 
   std::atomic_bool stop_{false};
@@ -87,7 +87,7 @@ int main() {
       try {
         auto cur_epoch = time_utils::now_ms();
         out << cur_epoch;
-        out << "\t" << j * 100 * 1024;
+        out << "\t" << j * 1000;
         out << std::endl;
       } catch (std::exception &e) {
         LOG(log_level::error) << "Exception: " << e.what();
@@ -105,7 +105,7 @@ int main() {
   std::ofstream out("latency.trace");
   for (j = 0; j < num_ops; ++j) {
     auto key = keys[j];
-    std::string data_(102400 - key.size(), 'x');
+    std::string data_(1000 - key.size(), 'x');
     put_t0 = time_utils::now_us();
     ht_client->put(key, data_);
     put_t1 = time_utils::now_us();

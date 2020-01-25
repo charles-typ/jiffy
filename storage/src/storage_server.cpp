@@ -253,7 +253,7 @@ int main(int argc, char **argv) {
 
   LOG(log_level::info) << "Storage server listening on " << address << ":" << service_port;
 
-  server_storage_tracker tracker(blocks, 1000, storage_trace);
+  server_storage_tracker tracker(blocks, 100, storage_trace);
   if (!storage_trace.empty()) {
     tracker.start();
   }
