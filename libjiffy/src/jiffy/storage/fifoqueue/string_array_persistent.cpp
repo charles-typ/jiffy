@@ -23,7 +23,7 @@ bool string_array_persistent::operator==(const string_array_persistent &other) c
       && last_element_offset_ == other.last_element_offset_;
 }
 
-std::pair<bool, std::string> string_array_persistent::put(const std::string &item) {
+void string_array_persistent::put(const std::string &item) {
   std::size_t len = item.size();
   // Write length
   local_.seekp(0, std::ios::end);
@@ -43,8 +43,6 @@ std::pair<bool, std::string> string_array_persistent::get() {
   std::size_t len;
   local_.seekg(head_, std::ios::beg);
   local_.read(reinterpret_cast<char*>(&len), METADATA_LEN);
-  //auto len = *((std::size_t *) (len_char));
-  //delete[] len_char;
   std::string ret(len, '\0');
   local_.read(&ret[0], len);
   head_ += len + METADATA_LEN;

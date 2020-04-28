@@ -36,7 +36,7 @@ class string_array_persistent {
    * @param max_size Max size for the string array
    * @param alloc Block memory allocator
    */
-  string_array_persistent(std::string &path);
+  explicit string_array_persistent(std::string &path);
 
   /**
    * @brief Destructor
@@ -55,7 +55,7 @@ class string_array_persistent {
    * @param item Message
    * @return Pair, a status boolean and the remain string
    */
-  std::pair<bool, std::string> put(const std::string &item);
+  void put(const std::string &item);
 
   /**
    * @brief Read string at offset
@@ -115,7 +115,7 @@ class string_array_persistent {
  private:
 
   /* Read pointer */
-  std::size_t head_;
+  std::streamoff head_;
 
   /* File path */
   std::string path_;

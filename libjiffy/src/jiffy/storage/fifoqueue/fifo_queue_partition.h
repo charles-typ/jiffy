@@ -227,8 +227,17 @@ class fifo_queue_partition : public chain_module {
    */
   void clear_partition();
 
+  /**
+   * @brief Allocate persistent partition
+   * @param path Persistent storage path
+   * @return
+   */
+  bool create_persistent_partition(std::string &path);
+
   /* Fifo queue partition */
   fifo_queue_type partition_;
+
+  fifo_queue_persistent_type* persistent_partition_;
 
   /* Custom serializer/deserializer */
   std::shared_ptr<serde> ser_;

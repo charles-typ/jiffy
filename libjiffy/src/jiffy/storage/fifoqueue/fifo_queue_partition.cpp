@@ -17,6 +17,7 @@ fifo_queue_partition::fifo_queue_partition(block_memory_manager *manager,
                                            int auto_scaling_port)
     : chain_module(manager, name, metadata, FQ_CMDS),
       partition_(manager->mb_capacity(), build_allocator<char>()),
+      persistent_partition_(nullptr),
       scaling_up_(false),
       scaling_down_(false),
       dirty_(false),
@@ -123,31 +124,19 @@ void fifo_queue_partition::dequeue(response &_return, const arg_list &args) {
 }
 
 void fifo_queue_partition::enqueue_ls(response &_return, const arg_list &args) {
-  if (!(args.size() == 3)) {
+  if (args.size() != 3) {
     RETURN_ERR("!args_error");
   }
-  
   std::string file_path, line, data;
   // args[2] is the local directory path passed in, need to remove "local:/" to make it work
   file_path = args[2];
   file_path.append(name());
-  std::ofstream out(file_path,std::ios::app);
-  if (out) {
-    data = args[1];
-    out << data << std::endl;
-    out.close();
-    RETURN_OK();  
-  }
-  else{
-    RETURN_ERR("!fifo_queue_does_not_exist");
-  }
-  
-  enqueue_ls_data_size_ += args[1].size();
+  persistent_partition_->put(args[1]);
   RETURN_OK();
 }
 
 void fifo_queue_partition::dequeue_ls(response &_return, const arg_list &args) {
-  if (!(args.size() == 2)) {
+  if (args.size() != 2) {
     RETURN_ERR("!args_error");
   }
   std::vector<std::string> v;
@@ -155,27 +144,11 @@ void fifo_queue_partition::dequeue_ls(response &_return, const arg_list &args) {
   // args[3] is the local directory path passed in, need to remove "local:/" to make it work
   file_path = args[1];
   file_path.append(name());
-  std::ifstream in(file_path);
-  if (in) {
-    while(getline(in,line)){
-      v.push_back(line);
-    }
-    in.close();
-    if (v.size() == 0){
-      RETURN_ERR("!queue_is_empty");
-    }
+  auto ret = persistent_partition_->get();
+  if(ret.first) {
+    RETURN_OK(ret.second);
   }
-  else{
-    RETURN_ERR("!fifo_queue_does_not_exist");
-  }
-  if (v.size() > 0){
-    std::ofstream out(file_path);
-    for (size_t i = 1; i<v.size(); ++i){
-      out<<v[i]<<std::endl;
-    }
-    out.close();
-    RETURN_OK(v[0]);
-  }
+  RETURN_ERR("Data unavailable");
 }
 
 void fifo_queue_partition::read_next(response &_return, const arg_list &args) {
@@ -480,6 +453,11 @@ void fifo_queue_partition::clear_partition() {
   dequeue_time_count_ = 0;
   in_rate_ = 0;
   out_rate_ = 0;
+}
+
+bool fifo_queue_partition::create_persistent_partition(std::string &path) {
+  persistent_partition_ = new fifo_queue_persistent_type(path);
+  return persistent_partition_ != nullptr;
 }
 
 REGISTER_IMPLEMENTATION("fifoqueue", fifo_queue_partition);
