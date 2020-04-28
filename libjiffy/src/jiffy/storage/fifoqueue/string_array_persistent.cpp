@@ -33,7 +33,6 @@ void string_array_persistent::put(const std::string &item) {
   // Write data
   local_.write(item.c_str(), len);
   tail_ += len;
-  return std::make_pair(true, std::string("!success"));
 }
 
 std::pair<bool, std::string> string_array_persistent::get() {
@@ -75,7 +74,7 @@ void string_array_persistent::clear() {
 }
 
 bool string_array_persistent::empty() const {
-  return tail_ == 0 || tail_ == head_;
+  return tail_ == 0 || tail_ == (std::size_t(head_));
 }
 
 std::size_t string_array_persistent::max_offset() const {
