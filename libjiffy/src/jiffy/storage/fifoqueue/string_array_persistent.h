@@ -24,7 +24,7 @@ class string_array_persistent {
   typedef std::string *pointer;
 
  public:
-  static const int METADATA_LEN = 8;
+  static const int METADATA_LEN = sizeof(std::size_t);
 
   /**
    * @brief Constructor
@@ -62,14 +62,14 @@ class string_array_persistent {
    * @param offset Read offset
    * @param Pair, a status boolean and the read string
    */
-  const std::pair<bool, std::string> get();
+  std::pair<bool, std::string> get();
 
   /**
    * @brief Find next string for the given offset string
    * @param offset Offset of the current string
    * @return Offset of the next string
    */
-  std::size_t find_next(std::size_t offset) const;
+  std::size_t find_next(std::size_t offset);
 
   /**
    * @brief Fetch total size of the string array

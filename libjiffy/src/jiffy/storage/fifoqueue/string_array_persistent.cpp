@@ -19,43 +19,42 @@ string_array_persistent::~string_array_persistent() {
 }
 
 bool string_array_persistent::operator==(const string_array_persistent &other) const {
-  return path_ == other.path_ && tail_ == other.tail_ && head_ = other.head_
+  return path_ == other.path_ && tail_ == other.tail_ && head_ == other.head_
       && last_element_offset_ == other.last_element_offset_;
 }
 
 std::pair<bool, std::string> string_array_persistent::put(const std::string &item) {
-  auto len = item.size();
+  std::size_t len = item.size();
   // Write length
   local_.seekp(0, std::ios::end);
-  local_.write((char*)&len, METADATA_LEN);
+  local_.write(reinterpret_cast<char*>(&len), METADATA_LEN);
   last_element_offset_ = tail_;
   tail_ += METADATA_LEN;
-
   // Write data
   local_.write(item.c_str(), len);
   tail_ += len;
   return std::make_pair(true, std::string("!success"));
 }
 
-const std::pair<bool, std::string> string_array_persistent::get() {
+std::pair<bool, std::string> string_array_persistent::get() {
   if (empty()) {
     return std::make_pair(false, "");
   }
-  char len_char[METADATA_LEN];
+  std::size_t len;
   local_.seekg(head_, std::ios::beg);
-  local_.read(len_char, METADATA_LEN);
-  auto len = *((std::size_t *) (len_char));
-  char ret[len];
-  local_.read(ret, len);
-  head_ = head_ + len + METADATA_LEN;
+  local_.read(reinterpret_cast<char*>(&len), METADATA_LEN);
+  //auto len = *((std::size_t *) (len_char));
+  //delete[] len_char;
+  std::string ret(len, '\0');
+  local_.read(&ret[0], len);
+  head_ += len + METADATA_LEN;
   return std::make_pair(true, std::string(ret, len));
 }
 
-std::size_t string_array_persistent::find_next(std::size_t offset) const {
+std::size_t string_array_persistent::find_next(std::size_t offset) {
   if (offset >= last_element_offset_ || offset >= tail_) return 0;
-  char len_char[METADATA_LEN];
-  local_.read(len_char, METADATA_LEN);
-  auto len = *((std::size_t *) (len_char));
+  std::size_t len;
+  local_.read(reinterpret_cast<char*>(&len), METADATA_LEN);
   return offset + len + METADATA_LEN;
 }
 
