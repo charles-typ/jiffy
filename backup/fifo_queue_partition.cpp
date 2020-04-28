@@ -29,8 +29,6 @@ fifo_queue_partition::fifo_queue_partition(block_memory_manager *manager,
       readnext_redirected_(false),
       enqueue_data_size_(0),
       dequeue_data_size_(0),
-      enqueue_ls_data_size_(0),
-      dequeue_ls_data_size_(0),
       prev_data_size_(0),
       enqueue_start_data_size_(0),
       dequeue_start_data_size_(0),
@@ -38,9 +36,9 @@ fifo_queue_partition::fifo_queue_partition(block_memory_manager *manager,
       out_rate_set_(false) {
   auto ser = conf.get("fifoqueue.serializer", "csv");
   if (ser == "binary") {
-    ser_ = std::make_shared<binary_serde>(binary_allocator_);
-  } else if (ser == "csv") {
     ser_ = std::make_shared<csv_serde>(binary_allocator_);
+  } else if (ser == "csv") {
+    ser_ = std::make_shared<binary_serde>(binary_allocator_);
   } else {
     throw std::invalid_argument("No such serializer/deserializer " + ser);
   }
@@ -101,7 +99,7 @@ void fifo_queue_partition::dequeue(response &_return, const arg_list &args) {
     head_ += (string_array::METADATA_LEN + ret.second.size());
     update_read_head();
     dequeue_data_size_ += ret.second.size();
-    RETURN_OK(ret.second);
+    RETURN_OK();
   }
   if (ret.second == "!not_available") {
     RETURN_ERR("!msg_not_found");
@@ -120,62 +118,6 @@ void fifo_queue_partition::dequeue(response &_return, const arg_list &args) {
                std::to_string(dequeue_start_data_size_));
   }
   RETURN_ERR("!redo");
-}
-
-void fifo_queue_partition::enqueue_ls(response &_return, const arg_list &args) {
-  if (!(args.size() == 3)) {
-    RETURN_ERR("!args_error");
-  }
-  
-  std::string file_path, line, data;
-  // args[2] is the local directory path passed in, need to remove "local:/" to make it work
-  file_path = args[2];
-  file_path.append(name());
-  std::ofstream out(file_path,std::ios::app);
-  if (out) {
-    data = args[1];
-    out<<data<<std::endl;
-    out.close();
-    RETURN_OK();  
-  }
-  else{
-    RETURN_ERR("!fifo_queue_does_not_exist");
-  }
-  
-  enqueue_ls_data_size_ += args[1].size();
-  RETURN_OK();
-}
-
-void fifo_queue_partition::dequeue_ls(response &_return, const arg_list &args) {
-  if (!(args.size() == 2)) {
-    RETURN_ERR("!args_error");
-  }
-  std::vector<std::string> v;
-  std::string file_path, line;
-  // args[3] is the local directory path passed in, need to remove "local:/" to make it work
-  file_path = args[1];
-  file_path.append(name());
-  std::ifstream in(file_path);
-  if (in) {
-    while(getline(in,line)){
-      v.push_back(line);
-    }
-    in.close();
-    if (v.size() == 0){
-      RETURN_ERR("!queue_is_empty");
-    }
-  }
-  else{
-    RETURN_ERR("!fifo_queue_does_not_exist");
-  }
-  if (v.size() > 0){
-    std::ofstream out(file_path);
-    for (int i = 1; i<v.size(); ++i){
-      out<<v[i]<<std::endl;
-    }
-    out.close();
-    RETURN_OK(v[0]);
-  }
 }
 
 void fifo_queue_partition::read_next(response &_return, const arg_list &args) {
@@ -198,10 +140,6 @@ void fifo_queue_partition::read_next(response &_return, const arg_list &args) {
     RETURN_ERR("!redirected_readnext", next_target_str_);
   }
   RETURN_ERR("!redo");
-}
-
-void fifo_queue_partition::read_next_ls(response &_return, const arg_list &args) {
-  RETURN_ERR("!not_implemented");
 }
 
 void fifo_queue_partition::clear(response &_return, const arg_list &args) {
@@ -237,20 +175,6 @@ void fifo_queue_partition::length(response &_return, const arg_list &args) {
     default:throw std::logic_error("Undefined type for length operation");
   }
 }
-
-void fifo_queue_partition::length_ls(response &_return, const arg_list &args) {
-  if (!(args.size() == 2)) {
-    RETURN_ERR("!args_error");
-  }
-  switch (std::stoi(args[1])) {
-    case fifo_queue_size_type::head_size:
-      RETURN_OK(std::to_string(enqueue_ls_data_size_));
-    case fifo_queue_size_type::tail_size:
-      RETURN_OK(std::to_string(dequeue_ls_data_size_));
-    default:throw std::logic_error("Undefined type for length operation");
-  }
-}
-
 
 void fifo_queue_partition::in_rate(response &_return, const arg_list &args) {
   if (!(args.size() == 1 || (args.size() == 2 && args[1] == "!redirected"))) {
@@ -307,21 +231,13 @@ void fifo_queue_partition::run_command(response &_return, const arg_list &args) 
       break;
     case fifo_queue_cmd_id::fq_dequeue:dequeue(_return, args);
       break;
-    case fifo_queue_cmd_id::fq_enqueue_ls:enqueue_ls(_return, args);
-      break;
-    case fifo_queue_cmd_id::fq_dequeue_ls:dequeue_ls(_return, args);
-      break;
     case fifo_queue_cmd_id::fq_readnext:read_next(_return, args);
-      break;
-    case fifo_queue_cmd_id::fq_readnext_ls:read_next_ls(_return, args);
       break;
     case fifo_queue_cmd_id::fq_clear:clear(_return, args);
       break;
     case fifo_queue_cmd_id::fq_update_partition:update_partition(_return, args);
       break;
     case fifo_queue_cmd_id::fq_length:length(_return, args);
-      break;
-    case fifo_queue_cmd_id::fq_length_ls:length_ls(_return, args);
       break;
     case fifo_queue_cmd_id::fq_in_rate:in_rate(_return, args);
       break;
