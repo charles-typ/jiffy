@@ -134,7 +134,7 @@ void fifo_queue_partition::enqueue_ls(response &_return, const arg_list &args) {
   std::ofstream out(file_path,std::ios::app);
   if (out) {
     data = args[1];
-    out<<data<<std::endl;
+    out << data << std::endl;
     out.close();
     RETURN_OK();  
   }
@@ -170,7 +170,7 @@ void fifo_queue_partition::dequeue_ls(response &_return, const arg_list &args) {
   }
   if (v.size() > 0){
     std::ofstream out(file_path);
-    for (int i = 1; i<v.size(); ++i){
+    for (size_t i = 1; i<v.size(); ++i){
       out<<v[i]<<std::endl;
     }
     out.close();
@@ -200,7 +200,7 @@ void fifo_queue_partition::read_next(response &_return, const arg_list &args) {
   RETURN_ERR("!redo");
 }
 
-void fifo_queue_partition::read_next_ls(response &_return, const arg_list &args) {
+void fifo_queue_partition::read_next_ls(response &_return, const arg_list &) {
   RETURN_ERR("!not_implemented");
 }
 
@@ -434,6 +434,7 @@ bool fifo_queue_partition::overload() {
 bool fifo_queue_partition::underload() {
   return head_ > partition_.last_element_offset() && partition_.full();
 }
+
 void fifo_queue_partition::update_rate() {
   auto cur_time = utils::time_utils::now_us();
   enqueue_time_count_ += cur_time - enqueue_start_time_;
@@ -454,7 +455,7 @@ void fifo_queue_partition::update_rate() {
     dequeue_start_time_ = cur_time;
     dequeue_start_data_size_ = dequeue_data_size_;
   }
-};
+}
 
 void fifo_queue_partition::clear_partition() {
   partition_.clear();
