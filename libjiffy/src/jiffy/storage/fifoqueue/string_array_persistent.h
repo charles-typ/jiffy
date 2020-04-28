@@ -5,6 +5,7 @@
 #include <cstring>
 #include <vector>
 #include <map>
+#include <fstream>
 #include <iterator>
 #include "jiffy/storage/block_memory_allocator.h"
 
@@ -166,17 +167,15 @@ class string_array_persistent {
   std::size_t num_elements() const;
 
  private:
-  /* Block memory allocator */
-  block_memory_allocator<char> alloc_;
+
+  /* File path */
+  std::string path_;
+
+  /* Local store */ 
+  std::ifstream &local_;
 
   /* Offset of the last element */
   std::size_t last_element_offset_;
-
-  /* Maximum capacity */
-  std::size_t max_{};
-
-  /* Data pointer */
-  char *data_{};
 
   /* Tail position */
   std::size_t tail_{};
