@@ -79,6 +79,13 @@ void fifo_queue_partition::enqueue(response &_return, const arg_list &args) {
                  std::to_string(enqueue_time_count_),
                  std::to_string(enqueue_start_data_size_));
     } else {
+      if(persistent_) {
+        std::vector<std::string> persistent_args;
+        persistent_args.push_back(args[1]);
+        persistent_args.push_back(backing_path_);
+        enqueue_ls(_return, persistent_args);
+        return;
+      }
       RETURN_ERR("!redo");
     }
   }
@@ -120,30 +127,36 @@ void fifo_queue_partition::dequeue(response &_return, const arg_list &args) {
                std::to_string(dequeue_time_count_),
                std::to_string(dequeue_start_data_size_));
   }
+  if(persistent_) {
+    std::vector<std::string> persistent_args;
+    persistent_args.push_back(args[1]);
+    dequeue_ls(_return, persistent_args);
+    return;
+  }
   RETURN_ERR("!redo");
 }
 
 void fifo_queue_partition::enqueue_ls(response &_return, const arg_list &args) {
-  if (args.size() != 3) {
+  if (args.size() != 2) { // FIXME change this to 2 since we don't want to get the backing path here
     RETURN_ERR("!args_error");
   }
-  std::string file_path, line, data;
+  //std::string file_path, line, data;
   // args[2] is the local directory path passed in, need to remove "local:/" to make it work
-  file_path = args[2];
-  file_path.append(name());
+  //file_path = args[2];
+  //file_path.append(name());
   persistent_partition_->put(args[1]);
   RETURN_OK();
 }
 
 void fifo_queue_partition::dequeue_ls(response &_return, const arg_list &args) {
-  if (args.size() != 2) {
+  if (args.size() != 1) { // FIXME same as above
     RETURN_ERR("!args_error");
   }
-  std::vector<std::string> v;
-  std::string file_path, line;
+  //std::vector<std::string> v;
+  //std::string file_path, line;
   // args[3] is the local directory path passed in, need to remove "local:/" to make it work
-  file_path = args[1];
-  file_path.append(name());
+  //file_path = args[1];
+  //file_path.append(name());
   auto ret = persistent_partition_->get();
   if(ret.first) {
     RETURN_OK(ret.second);
@@ -212,7 +225,7 @@ void fifo_queue_partition::length(response &_return, const arg_list &args) {
 }
 
 void fifo_queue_partition::length_ls(response &_return, const arg_list &args) {
-  if (!(args.size() == 2)) {
+  if (args.size() != 2) {
     RETURN_ERR("!args_error");
   }
   switch (std::stoi(args[1])) {

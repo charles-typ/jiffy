@@ -254,6 +254,12 @@ class fifo_queue_partition : public chain_module {
   /* Bool value for auto scaling */
   bool auto_scale_;
 
+  /* Nool value for persistent storage */
+  bool persistent_;
+
+  /* Backing path for persistent storage */
+  std::string backing_path_;
+
   /* Auto scaling server hostname */
   std::string auto_scaling_host_;
 
