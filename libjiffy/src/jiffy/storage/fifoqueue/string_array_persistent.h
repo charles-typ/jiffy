@@ -6,15 +6,12 @@
 #include <vector>
 #include <map>
 #include <fstream>
+#include <iostream>
 #include <iterator>
 #include "jiffy/storage/block_memory_allocator.h"
 
 namespace jiffy {
 namespace storage {
-
-class string_array_persistent_iterator;
-class string_array_persistent;
-class const_string_array_persistent_iterator;
 
 /**
  * @brief String array class
@@ -23,16 +20,8 @@ class const_string_array_persistent_iterator;
  * and supports storing big strings between different data blocks.
  */
 class string_array_persistent {
-  friend class string_array_persistent_iterator;
-  friend class const_string_array_persistent_iterator;
-  typedef string_array_persistent_iterator iterator;
-  typedef const_string_array_persistent_iterator const_iterator;
-  typedef std::ptrdiff_t difference_type;
-  typedef std::size_t size_type;
   typedef std::string value_type;
   typedef std::string *pointer;
-  typedef std::string &reference;
-  typedef const std::string &const_reference;
 
  public:
   static const int METADATA_LEN = 8;
@@ -47,25 +36,12 @@ class string_array_persistent {
    * @param max_size Max size for the string array
    * @param alloc Block memory allocator
    */
-  string_array_persistent(std::size_t max_size, block_memory_allocator<char> alloc);
+  string_array_persistent(std::string &path);
 
   /**
    * @brief Destructor
    */
   ~string_array_persistent();
-
-  /**
-   * @brief Copy constructor
-   * @param other Another string array
-   */
-  string_array_persistent(const string_array_persistent &other);
-
-  /**
-   * @brief Copy assignment operator
-   * @param other Another string array
-   * @return String array
-   */
-  string_array_persistent &operator=(const string_array_persistent &other);
 
   /**
    * @brief Equal operator
@@ -79,14 +55,14 @@ class string_array_persistent {
    * @param item Message
    * @return Pair, a status boolean and the remain string
    */
-  std::pair<bool, std::string> push_back(const std::string &item);
+  std::pair<bool, std::string> put(const std::string &item);
 
   /**
    * @brief Read string at offset
    * @param offset Read offset
    * @param Pair, a status boolean and the read string
    */
-  const std::pair<bool, std::string> at(std::size_t offset) const;
+  const std::pair<bool, std::string> get();
 
   /**
    * @brief Find next string for the given offset string
@@ -125,36 +101,6 @@ class string_array_persistent {
   bool empty() const;
 
   /**
-   * @brief Check if string array is full
-   * @return Boolean, true if full
-   */
-  bool full() const;
-
-  /**
-   * @brief Fetch begin iterator
-   * @return Begin iterator
-   */
-  iterator begin();
-
-  /**
-   * @brief Fetch end iterator
-   * @return End iterator
-   */
-  iterator end();
-
-  /**
-   * @brief Fetch const begin iterator
-   * @return Const begin iterator
-   */
-  const_iterator begin() const;
-
-  /**
-   * @brief Fetch const end iterator
-   * @return Const end iterator
-   */
-  const_iterator end() const;
-
-  /**
    * @brief Fetch the maximum offset of the strings
    * @return Maximum offset of the strings
    */
@@ -168,11 +114,14 @@ class string_array_persistent {
 
  private:
 
+  /* Read pointer */
+  std::size_t head_;
+
   /* File path */
   std::string path_;
 
-  /* Local store */ 
-  std::ifstream &local_;
+  /* Local store */
+  std::fstream local_;
 
   /* Offset of the last element */
   std::size_t last_element_offset_;
@@ -180,123 +129,11 @@ class string_array_persistent {
   /* Tail position */
   std::size_t tail_{};
 
-  /* Bool for split string */
-  bool split_string_;
-
 };
 
-/**
- * Iterator for string array.
- */
-
-class string_array_persistent_iterator {
-  typedef typename string_array_persistent::value_type value_type;
-  typedef typename string_array_persistent::difference_type difference_type;
-  typedef typename string_array_persistent::pointer pointer;
-  typedef typename string_array_persistent::reference reference;
-  typedef typename string_array_persistent::const_reference const_reference;
- public:
-  /**
-   * @brief Constructor
-   * @param impl String array reference
-   * @param pos Position
-   */
-  string_array_persistent_iterator(string_array_persistent &impl, std::size_t pos);
-
-  /**
-   * @brief Operator *
-   * @return Value
-   */
-  value_type operator*() const;
-
-  /**
-   * @brief Operator ++
-   * @return string array iterator
-   */
-  const string_array_persistent_iterator operator++(int);
-
-  /**
-   * @brief Operator ==
-   * @param other Another string array iterator
-   * @return Boolean, true if equal
-   */
-  bool operator==(string_array_persistent_iterator other) const;
-
-  /**
-   * @brief Operator !=
-   * @param other Another string array iterator
-   * @return Boolean, true if not equal
-   */
-  bool operator!=(string_array_persistent_iterator other) const;
-
-  /**
-   * @brief Operator =
-   * @param other Another string array iterator
-   * @return string array iterator
-   */
-  string_array_persistent_iterator &operator=(const string_array_persistent_iterator &other);
-
- private:
-  /* String array */
-  string_array_persistent &impl_;
-
-  /* Position */
-  std::size_t pos_;
-};
-
-/**
- * Const iterator for string array.
- */
-
-class const_string_array_persistent_iterator {
-  typedef typename string_array_persistent::value_type value_type;
-  typedef typename string_array_persistent::difference_type difference_type;
-  typedef typename string_array_persistent::pointer pointer;
-  typedef typename string_array_persistent::reference reference;
-  typedef typename string_array_persistent::const_reference const_reference;
- public:
-  /**
-   * @brief Constructor
-   * @param impl String array reference
-   * @param pos Position
-   */
-  const_string_array_persistent_iterator(const string_array_persistent &impl, std::size_t pos);
-
-  /**
-   * @brief Operator *
-   * @return Value
-   */
-  value_type operator*() const;
-
-  /**
-   * @brief Operator ++
-   * @return const string array iterator
-   */
-  const const_string_array_persistent_iterator operator++(int);
-
-  /**
-   * @brief Operator ==
-   * @param other Another const string array iterator
-   * @return Boolean, true if equal
-   */
-  bool operator==(const_string_array_persistent_iterator other) const;
-
-  /**
-   * @brief Operator !=
-   * @param other Another const string array iterator
-   * @return Boolean, true if not equal
-   */
-  bool operator!=(const_string_array_persistent_iterator other) const;
-
- private:
-  /* String array */
-  const string_array_persistent &impl_;
-
-  /* Position */
-  std::size_t pos_;
-};
 
 }
 }
+
 
 #endif //JIFFY_STRING_ARRAY_PERSISTENT_H
