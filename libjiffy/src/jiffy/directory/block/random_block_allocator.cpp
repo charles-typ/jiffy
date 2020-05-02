@@ -3,13 +3,17 @@
 #include <iostream>
 #include "random_block_allocator.h"
 #include "../../utils/rand_utils.h"
+#include "../../utils/logger.h"
 
 namespace jiffy {
 namespace directory {
 
+using namespace utils;
+
 std::vector<std::string> random_block_allocator::allocate(std::size_t count, const std::vector<std::string> &) {
   std::unique_lock<std::mutex> lock(mtx_);
   if (count > free_blocks_.size()) {
+    LOG(log_level::info) << "Throwing out insufficient block error here";
     throw std::out_of_range(
         "Insufficient free blocks to allocate from (requested: " + std::to_string(count) + ", have: "
             + std::to_string(free_blocks_.size()));
