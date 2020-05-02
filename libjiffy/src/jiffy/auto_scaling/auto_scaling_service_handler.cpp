@@ -216,9 +216,12 @@ void auto_scaling_service_handler::auto_scaling(const std::vector<std::string> &
     auto start = time_utils::now_us();
     auto dst_name = conf.find("next_partition_name")->second;
     LOG(log_level::info) << "Requesting for an add block";
+    try {
+      auto dst_replica_chain = fs->add_block(path, dst_name, "regular");
+    } catch (std::exception &e) {
+      LOG(log_level::info) << "Catching this exception here";
+    }
 
-    auto start = time_utils::now_us();
-    auto dst_replica_chain = fs->add_block(path, dst_name, "regular");
     LOG(log_level::info) << "Successfully add block";
     auto finish_adding_replica_chain = time_utils::now_us();
 
