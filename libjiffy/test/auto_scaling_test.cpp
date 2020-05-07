@@ -66,9 +66,17 @@ for (std::size_t i = 0; i < 5; ++i) {
 REQUIRE_NOTHROW(client.enqueue(std::string(1024, (std::to_string(i)).c_str()[0])));
 }
 
-for (std::size_t i = 0; i < 100; ++i) {
+while (t->dstatus("/sandbox/scale_up.txt").data_blocks().size() == 1);
+
+for (std::size_t i = 5; i < 10; ++i) {
+REQUIRE_NOTHROW(client.enqueue(std::string(1024, (std::to_string(i)).c_str()[0])));
+}
+
+for (std::size_t i = 0; i < 10; ++i) {
 REQUIRE(client.dequeue() == std::string(1024, (std::to_string(i)).c_str()[0]));
 }
+
+while (t->dstatus("/sandbox/scale_up.txt").data_blocks().size() == 2);
 
 as_server->stop();
 if (auto_scaling_thread.joinable()) {
