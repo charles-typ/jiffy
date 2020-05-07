@@ -178,6 +178,7 @@ void fifo_queue_client::run_repeated(std::vector<std::string> &_return, const st
   bool redo;
   do {
     try {
+      LOG(log_level::info) << args[0] << " " << block_id(args) << " " << blocks_.size();
       _return = blocks_[block_id(args)]->run_command(args);
       handle_redirect(_return, args);
       redo = false;
