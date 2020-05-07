@@ -7,6 +7,9 @@ using namespace utils;
 
 string_array_persistent::string_array_persistent(std::string &path) : path_(path) {
   local_ = std::fstream(path, std::ios::in | std::ios::out | std::ios::trunc | std::ios::binary);
+  if(!local_.is_open()) {
+      LOG(log_level::info) << "Error opening file";
+  }
   local_.seekp(0, std::ios::beg);
   local_.seekg(0, std::ios::beg);
   tail_ = 0;
@@ -26,26 +29,33 @@ bool string_array_persistent::operator==(const string_array_persistent &other) c
 void string_array_persistent::put(const std::string &item) {
   std::size_t len = item.size();
   // Write length
-  local_.seekp(0, std::ios::end);
+  local_.seekp(tail_, std::ios::beg);
   local_.write(reinterpret_cast<char*>(&len), METADATA_LEN);
   last_element_offset_ = tail_;
   tail_ += METADATA_LEN;
   // Write data
   local_.write(item.c_str(), len);
   tail_ += len;
+  //LOG(log_level::info) << "Writing to this position " << local_.tellp();
 }
 
 std::pair<bool, std::string> string_array_persistent::get() {
   if (empty()) {
+    LOG(log_level::info) << "This persistent partition is empty";
     return std::make_pair(false, "");
   }
   std::size_t len;
   local_.seekg(head_, std::ios::beg);
+  //LOG(log_level::info) << "Reading from this position " << local_.tellg();
   local_.read(reinterpret_cast<char*>(&len), METADATA_LEN);
-  std::string ret(len, '\0');
-  local_.read(&ret[0], len);
+  //LOG(log_level::info) << "The length to be read " << len;
+  //std::string ret(len, '\0');
+  char test[len];
+  //local_.read(&ret[0], len);
+  local_.read(&test[0], len);
   head_ += len + METADATA_LEN;
-  return std::make_pair(true, std::string(ret, len));
+  std::string ret(test);
+  return std::make_pair(true, std::string(test, len));
 }
 
 std::size_t string_array_persistent::find_next(std::size_t offset) {

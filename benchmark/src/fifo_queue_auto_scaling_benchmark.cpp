@@ -71,6 +71,7 @@ int main() {
   std::ofstream out("latency.trace");
   uint64_t enqueue_tot_time = 0, enqueue_t0 = 0, enqueue_t1 = 0;
   for (j = 0; j < num_ops; ++j) {
+    LOG(log_level::info) << "Running enqueue: " << j;
     enqueue_t0 = time_utils::now_us();
     fq_client->enqueue(data_);
     enqueue_t1 = time_utils::now_us();

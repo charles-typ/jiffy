@@ -145,6 +145,7 @@ void fifo_queue_partition::enqueue_ls(response &_return, const arg_list &args) {
   // args[2] is the local directory path passed in, need to remove "local:/" to make it work
   //file_path = args[2];
   //file_path.append(name());
+  LOG(log_level::info) << "Enqueue to persistent " << args[0];
   persistent_partition_.put(args[0]);
   RETURN_OK();
 }
@@ -159,6 +160,7 @@ void fifo_queue_partition::dequeue_ls(response &_return, const arg_list &args) {
   //file_path = args[1];
   //file_path.append(name());
   auto ret = persistent_partition_.get();
+  LOG(log_level::info) << "Dequeue from persistent " << ret.second;
   if(ret.first) {
     RETURN_OK(ret.second);
   }
