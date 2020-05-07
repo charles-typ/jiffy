@@ -150,7 +150,7 @@ class Queue(DataStructureClient):
             raise ValueError
 
     def add_blocks(self, response, args):
-        if self._block_id(args) >= len(self.block_info.data_blocks) - 1:
+        if self._block_id(args) >= len(self.blocks) - 1:
             if self.auto_scale:
                 block_ids = [bytes_to_str(j) for j in response[1].split(b('!'))]
                 chain = ReplicaChain(block_ids, 0, 0, rpc_storage_mode.rpc_in_memory)
