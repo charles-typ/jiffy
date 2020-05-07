@@ -199,7 +199,10 @@ void fifo_queue_partition::clear(response &_return, const arg_list &args) {
 }
 
 void fifo_queue_partition::update_partition(response &_return, const arg_list &args) {
-  next_target(args[1]);
+  if(args[1] != "error") {
+    next_target(args[1]);
+  }
+  scaling_up_ = false;
   RETURN_OK();
 }
 
@@ -323,7 +326,7 @@ void fifo_queue_partition::run_command(response &_return, const arg_list &args) 
   if (is_mutator(cmd_name)) {
     dirty_ = true;
   }
-  if (auto_scale_ && is_mutator(cmd_name) && overload() && is_tail() && !scaling_up_ && !scaling_down_) {
+  if (auto_scale_ && is_mutator(cmd_name) && overload() && is_tail() && !scaling_up_ && !scaling_down_ && next_target_str_.empty()) {
     LOG(log_level::info) << "Overloaded partition: " << name() << " storage = " << storage_size() << " capacity = "
                          << storage_capacity() << " partition size = " << size() << "partition capacity "
                          << partition_.capacity();
