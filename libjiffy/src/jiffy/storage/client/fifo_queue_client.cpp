@@ -59,10 +59,11 @@ void fifo_queue_client::enqueue(const std::string &item) {
   run_repeated(_return, args);
 }
 
-void fifo_queue_client::dequeue() {
+std::string fifo_queue_client::dequeue() {
   std::vector<std::string> _return;
   std::vector<std::string> args{"dequeue"};
   run_repeated(_return, args);
+  return _return[1];
 }
 
 std::string fifo_queue_client::read_next() {

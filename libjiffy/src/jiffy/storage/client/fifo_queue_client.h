@@ -44,7 +44,7 @@ class fifo_queue_client : data_structure_client {
   /**
    * @brief Dequeue item
    */
-  void dequeue();
+  std::string dequeue();
 
   /**
    * @brief Read next item without dequeue
