@@ -472,10 +472,10 @@ void fifo_queue_partition::clear_partition() {
   out_rate_ = 0;
 }
 
-bool fifo_queue_partition::create_persistent_partition(std::string &path) {
-  persistent_partition_ = new fifo_queue_persistent_type(path);
-  return persistent_partition_ != nullptr;
-}
+//bool fifo_queue_partition::create_persistent_partition(std::string &path) {
+//  persistent_partition_ = new fifo_queue_persistent_type(path);
+//  return persistent_partition_ != nullptr;
+//}
 
 REGISTER_IMPLEMENTATION("fifoqueue", fifo_queue_partition);
 
