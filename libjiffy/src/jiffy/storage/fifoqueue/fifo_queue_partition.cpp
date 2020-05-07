@@ -157,9 +157,9 @@ void fifo_queue_partition::enqueue_ls(response &_return, const arg_list &args) {
 }
 
 void fifo_queue_partition::dequeue_ls(response &_return, const arg_list &args) {
-  if (args.size() != 1) { // FIXME same as above
-    RETURN_ERR("!args_error");
-  }
+  //if (args.size() != 1) { // FIXME same as above
+  //  RETURN_ERR("!args_error");
+  //}
   //std::vector<std::string> v;
   //std::string file_path, line;
   // args[3] is the local directory path passed in, need to remove "local:/" to make it work
