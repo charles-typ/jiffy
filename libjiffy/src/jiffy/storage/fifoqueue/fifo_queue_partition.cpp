@@ -116,8 +116,8 @@ void fifo_queue_partition::dequeue(response &_return, const arg_list &args) {
     RETURN_ERR("!msg_not_found");
   }
   if(persistent_ && !persistent_partition_.empty()) {
+    LOG(log_level::info) << "Dequeue from persistent";
     std::vector<std::string> persistent_args;
-    persistent_args.push_back(args[1]);
     dequeue_ls(_return, persistent_args);
     return;
   }
