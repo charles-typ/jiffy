@@ -112,8 +112,14 @@ void fifo_queue_partition::dequeue(response &_return, const arg_list &args) {
     dequeue_data_size_ += ret.second.size();
     RETURN_OK(ret.second);
   }
-  if (ret.second == "!not_available" && !persistent_) {
+  if (ret.second == "!not_available" && !persistent_ && persistent_partition_.empty()) {
     RETURN_ERR("!msg_not_found");
+  }
+  if(persistent_ && !persistent_partition_.empty()) {
+    std::vector<std::string> persistent_args;
+    persistent_args.push_back(args[1]);
+    dequeue_ls(_return, persistent_args);
+    return;
   }
   if (!auto_scale_) {
     dequeue_redirected_ = true;
@@ -128,12 +134,12 @@ void fifo_queue_partition::dequeue(response &_return, const arg_list &args) {
                std::to_string(dequeue_time_count_),
                std::to_string(dequeue_start_data_size_));
   }
-  if(persistent_) {
-    std::vector<std::string> persistent_args;
-    persistent_args.push_back(args[1]);
-    dequeue_ls(_return, persistent_args);
-    return;
-  }
+//  if(persistent_) {
+//    std::vector<std::string> persistent_args;
+//    persistent_args.push_back(args[1]);
+//    dequeue_ls(_return, persistent_args);
+//    return;
+//  }
   RETURN_ERR("!redo");
 }
 
