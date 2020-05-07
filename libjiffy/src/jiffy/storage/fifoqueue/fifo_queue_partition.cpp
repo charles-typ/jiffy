@@ -22,6 +22,7 @@ fifo_queue_partition::fifo_queue_partition(block_memory_manager *manager,
       scaling_up_(false),
       scaling_down_(false),
       dirty_(false),
+      persistent_(false),
       auto_scaling_host_(auto_scaling_host),
       auto_scaling_port_(auto_scaling_port),
       head_(0),
@@ -80,14 +81,13 @@ void fifo_queue_partition::enqueue(response &_return, const arg_list &args) {
                  std::to_string(enqueue_time_count_),
                  std::to_string(enqueue_start_data_size_));
     } else {
-      if(persistent_) {
-        std::vector<std::string> persistent_args;
-        persistent_args.push_back(args[1]);
-        persistent_args.push_back(backing_path_);
-        enqueue_ls(_return, persistent_args);
-        return;
-      }
-      RETURN_ERR("!redo");
+      persistent_ = true;
+      std::vector<std::string> persistent_args;
+      persistent_args.push_back(args[1]);
+      persistent_args.push_back(backing_path_);
+      enqueue_ls(_return, persistent_args);
+      return;
+      // RETURN_ERR("!redo"); // in this scenario never redo here
     }
   }
   enqueue_data_size_ += args[1].size();
@@ -112,7 +112,7 @@ void fifo_queue_partition::dequeue(response &_return, const arg_list &args) {
     dequeue_data_size_ += ret.second.size();
     RETURN_OK(ret.second);
   }
-  if (ret.second == "!not_available") {
+  if (ret.second == "!not_available" && !persistent_) {
     RETURN_ERR("!msg_not_found");
   }
   if (!auto_scale_) {
