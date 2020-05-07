@@ -155,7 +155,7 @@ void fifo_queue_client::handle_partition_id(const std::vector<std::string> &args
     enqueue_partition_++;
   } else if (cmd == fifo_queue_cmd_id::fq_dequeue
       || (cmd == fifo_queue_cmd_id::fq_length && std::stoi(args[1]) == fifo_queue_size_type::tail_size)
-      || (cmd == fifo_queue_cmd_id::fq_out_rate) || cmd == fifo_queue_cmd_id::fq_front) {
+      || (cmd == fifo_queue_cmd_id::fq_out_rate)) {
     dequeue_partition_++;
     if (dequeue_partition_ > enqueue_partition_) {
       enqueue_partition_ = dequeue_partition_;
