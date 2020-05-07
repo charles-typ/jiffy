@@ -17,7 +17,8 @@ fifo_queue_partition::fifo_queue_partition(block_memory_manager *manager,
                                            int auto_scaling_port)
     : chain_module(manager, name, metadata, FQ_CMDS),
       partition_(manager->mb_capacity(), build_allocator<char>()),
-      persistent_partition_(nullptr),
+      backing_path_(name + "tmp"),
+      persistent_partition_(backing_path_),
       scaling_up_(false),
       scaling_down_(false),
       dirty_(false),
@@ -144,7 +145,7 @@ void fifo_queue_partition::enqueue_ls(response &_return, const arg_list &args) {
   // args[2] is the local directory path passed in, need to remove "local:/" to make it work
   //file_path = args[2];
   //file_path.append(name());
-  persistent_partition_->put(args[1]);
+  persistent_partition_.put(args[0]);
   RETURN_OK();
 }
 
@@ -157,7 +158,7 @@ void fifo_queue_partition::dequeue_ls(response &_return, const arg_list &args) {
   // args[3] is the local directory path passed in, need to remove "local:/" to make it work
   //file_path = args[1];
   //file_path.append(name());
-  auto ret = persistent_partition_->get();
+  auto ret = persistent_partition_.get();
   if(ret.first) {
     RETURN_OK(ret.second);
   }

@@ -237,7 +237,11 @@ class fifo_queue_partition : public chain_module {
   /* Fifo queue partition */
   fifo_queue_type partition_;
 
-  fifo_queue_persistent_type* persistent_partition_;
+  /* Backing path for persistent storage */
+  std::string backing_path_;
+
+  /* Fifo queue persistent partition */
+  fifo_queue_persistent_type persistent_partition_;
 
   /* Custom serializer/deserializer */
   std::shared_ptr<serde> ser_;
@@ -256,9 +260,6 @@ class fifo_queue_partition : public chain_module {
 
   /* Nool value for persistent storage */
   bool persistent_;
-
-  /* Backing path for persistent storage */
-  std::string backing_path_;
 
   /* Auto scaling server hostname */
   std::string auto_scaling_host_;
