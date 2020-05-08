@@ -3,6 +3,7 @@
 #include "jiffy/storage/partition_manager.h"
 #include "jiffy/storage/fifoqueue/fifo_queue_ops.h"
 #include "jiffy/auto_scaling/auto_scaling_client.h"
+#include "jiffy/utils/rand_utils.h"
 
 namespace jiffy {
 namespace storage {
@@ -17,7 +18,7 @@ fifo_queue_partition::fifo_queue_partition(block_memory_manager *manager,
                                            int auto_scaling_port)
     : chain_module(manager, name, metadata, FQ_CMDS),
       partition_(manager->mb_capacity(), build_allocator<char>()),
-      backing_path_(name + "tmp"),
+      backing_path_(name + "tmp" + std::to_string(rand_utils::rand_int64(0,999999))),
       persistent_partition_(backing_path_),
       scaling_up_(false),
       scaling_down_(false),
@@ -110,7 +111,7 @@ void fifo_queue_partition::dequeue(response &_return, const arg_list &args) {
     head_ += (string_array::METADATA_LEN + ret.second.size());
     update_read_head();
     dequeue_data_size_ += ret.second.size();
-    RETURN_OK(ret.second);
+    RETURN_OK();
   }
   if (ret.second == "!not_available" && !persistent_ && persistent_partition_.empty()) {
     RETURN_ERR("!msg_not_found");
@@ -168,7 +169,7 @@ void fifo_queue_partition::dequeue_ls(response &_return, const arg_list &args) {
   auto ret = persistent_partition_.get();
   //LOG(log_level::info) << "Dequeue from persistent " << ret.second;
   if(ret.first) {
-    RETURN_OK(ret.second);
+    RETURN_OK();
   }
   RETURN_ERR("Data unavailable");
 }

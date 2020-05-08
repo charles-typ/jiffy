@@ -110,7 +110,7 @@ class Queue(DataStructureClient):
         self._run_repeated([QueueOps.enqueue, item])
 
     def get(self):
-        return self._run_repeated([QueueOps.dequeue])[1]
+        self._run_repeated([QueueOps.dequeue])
 
     def put_ls(self, item):
         self._run_repeated([QueueOps.enqueue_ls, item, self.path_])
