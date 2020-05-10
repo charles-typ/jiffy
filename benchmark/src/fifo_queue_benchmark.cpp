@@ -106,7 +106,6 @@ class dequeue_benchmark : public fifo_queue_benchmark {
         size_t j;
         for (j = 0; j < num_ops_; ++j) {
           t0 = time_utils::now_us();
-          clients_[i]->front();
           clients_[i]->dequeue();
           t1 = time_utils::now_us();
           tot_time += (t1 - t0);
@@ -120,13 +119,13 @@ class dequeue_benchmark : public fifo_queue_benchmark {
 };
 
 int main() {
-  std::string address = "127.0.0.1";
+  std::string address = "172.31.28.29";
   int service_port = 9090;
   int lease_port = 9091;
   int num_blocks = 1;
   int chain_length = 1;
-  int num_ops = 100000;
-  int data_size = 64;
+  int num_ops = 1000;
+  int data_size = 1024 * 1024;
   std::vector<std::string> op_type_set;
   op_type_set.push_back("enqueue");
   op_type_set.push_back("dequeue");
