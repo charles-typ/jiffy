@@ -60,8 +60,8 @@ class Queue(DataStructureClient):
         if response[0][:11] == b('!redirected'):
             redirected_response = response[0]
             while response[0] == redirected_response:
-                self.add_blocks(response, args)
-                self.handle_partition_id(args)
+                if self.add_blocks(response, args) or args[0] == QueueOps.dequeue:
+                    self.handle_partition_id(args)
                 while True:
                     args_copy = copy.deepcopy(args)
                     if args[0] == QueueOps.enqueue:
@@ -98,6 +98,18 @@ class Queue(DataStructureClient):
     def put(self, item):
         self._run_repeated([QueueOps.enqueue, item])
 
+    def pipeline_put(self, items):
+        for item in items:
+            self.blocks[self._block_id(args)].pipeline_send_command([QueueOps.enqueue, item])
+        ret = []
+        for i in range(len(items)):
+            ret.append(self.blocks[self._block_id(args)].pipeline_recv_response())
+        for i in range(len(items)):
+            self._handle_redirect([QueueOps.enqueue, items[i]], ret[i])
+
+
+
+
     def get(self):
         return self._run_repeated([QueueOps.dequeue])[1]
 
@@ -133,14 +145,17 @@ class Queue(DataStructureClient):
             raise ValueError
 
     def add_blocks(self, response, args):
+        ret = False
         if self._block_id(args) >= len(self.blocks) - 1:
             if self.auto_scale:
                 block_ids = [bytes_to_str(j) for j in response[1].split(b('!'))]
                 chain = ReplicaChain(block_ids, 0, 0, rpc_storage_mode.rpc_in_memory)
                 self.blocks.append(
                     ReplicaChainClient(self.fs, self.path, self.client_cache, chain, QueueOps.op_types))
+                ret = True
             else:
                 raise ValueError
+        return ret
 
 
     class ReadIterator(object):
