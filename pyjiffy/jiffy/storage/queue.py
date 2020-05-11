@@ -100,10 +100,10 @@ class Queue(DataStructureClient):
 
     def pipeline_put(self, items):
         for item in items:
-            self.blocks[self._block_id(args)].pipeline_send_command([QueueOps.enqueue, item])
+            self.blocks[self._block_id([QueueOps.enqueue, item])].pipeline_send_command([QueueOps.enqueue, item])
         ret = []
         for i in range(len(items)):
-            ret.append(self.blocks[self._block_id(args)].pipeline_recv_response())
+            ret.append(self.blocks[self._block_id([QueueOps.enqueue, items[i]])].pipeline_recv_response())
         for i in range(len(items)):
             self._handle_redirect([QueueOps.enqueue, items[i]], ret[i])
 
