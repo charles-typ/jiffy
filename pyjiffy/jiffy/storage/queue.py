@@ -68,7 +68,7 @@ class Queue(DataStructureClient):
                         args_copy.extend(response[-3:])
                     elif args[0] == QueueOps.dequeue:
                         args_copy.extend(response[-2:])
-                    if args[0] == QueueOps.dequeue:
+                    #if args[0] == QueueOps.dequeue:
                         #print("Dequeue redirect " + str(self._block_id(args)) + " " + str(len(self.blocks)) + " " + str(self.enqueue_partition))
                     response = self.blocks[self._block_id(args)].run_command_redirected(args_copy)
                     if response[0] != b('!redo'):
