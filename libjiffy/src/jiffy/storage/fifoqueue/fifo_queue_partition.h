@@ -330,6 +330,8 @@ class fifo_queue_partition : public chain_module {
   /* Boolean indicating if out rate is set */
   bool out_rate_set_;
 
+  double threshold_;
+
   /* Periodicity for rate calculation in microseconds */
   std::size_t periodicity_us_;
 

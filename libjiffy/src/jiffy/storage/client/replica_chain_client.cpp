@@ -71,6 +71,22 @@ void replica_chain_client::send_command(const std::vector<std::string> &args) {
   in_flight_ = true;
 }
 
+void replica_chain_client::pipeline_send_command(const std::vector<std::string> &args) {
+   cmd_client_.at(args[0])->command_request(seq_, args);
+ }
+
+std::vector<std::string> replica_chain_client::pipeline_recv_response() {
+   std::vector<std::string> ret;
+   int64_t rseq;
+   rseq = response_reader_.recv_response(ret);
+   //if (rseq != seq_.client_seq_no) {
+   //  throw std::logic_error(
+   //      "SEQ: Expected=" + std::to_string(seq_.client_seq_no) + " Received=" + std::to_string(rseq));
+   //}
+   seq_.client_seq_no++;
+   return ret;
+ }
+
 std::vector<std::string> replica_chain_client::recv_response() {
   std::vector<std::string> ret;
   int64_t rseq;

@@ -39,7 +39,8 @@ fifo_queue_partition::fifo_queue_partition(block_memory_manager *manager,
       enqueue_start_data_size_(0),
       dequeue_start_data_size_(0),
       in_rate_set_(false),
-      out_rate_set_(false) {
+      out_rate_set_(false),
+      threshold_(0.2) {
   auto ser = conf.get("fifoqueue.serializer", "csv");
   if (ser == "binary") {
     ser_ = std::make_shared<binary_serde>(binary_allocator_);
@@ -66,7 +67,9 @@ void fifo_queue_partition::enqueue(response &_return, const arg_list &args) {
     enqueue_start_data_size_ = std::stoul(args[4]);
     enqueue_start_time_ = time_utils::now_us();
   }
+  //LOG(log_level::info) << "Enqueue here 1";
   auto ret = partition_.push_back(args[1]);
+  //LOG(log_level::info) << "Enqueue here 1 succ";
   if (!ret.first) {
     if (!auto_scale_) {
       enqueue_redirected_ = true;
@@ -75,6 +78,7 @@ void fifo_queue_partition::enqueue(response &_return, const arg_list &args) {
                  std::to_string(enqueue_time_count_),
                  std::to_string(enqueue_start_data_size_));
     } else if (!next_target_str_.empty()) {
+      //LOG(log_level::info) << "Enqueue here 2";
       enqueue_redirected_ = true;
       RETURN_ERR("!redirected_enqueue",
                  next_target_str_,
@@ -82,6 +86,7 @@ void fifo_queue_partition::enqueue(response &_return, const arg_list &args) {
                  std::to_string(enqueue_time_count_),
                  std::to_string(enqueue_start_data_size_));
     } else {
+      //LOG(log_level::info) << "Enqueue here 3";
       persistent_ = true;
       std::vector<std::string> persistent_args;
       persistent_args.push_back(args[1]);
@@ -99,26 +104,30 @@ void fifo_queue_partition::dequeue(response &_return, const arg_list &args) {
   if (!(args.size() == 1 || (args.size() == 4 && args[3] == "!redirected"))) {
     RETURN_ERR("!args_error");
   }
-  if (args.size() == 4 && args[3] == "!redirected" && dequeue_data_size_ == 0) {
-    out_rate_ = false;
-    dequeue_start_data_size_ = std::stoul(args[2]);
-    dequeue_time_count_ = std::stoul(args[1]);
-    dequeue_start_time_ = time_utils::now_us();
-    dequeue_data_size_ += prev_data_size_;
-  }
-  auto ret = partition_.at(head_);
+  //if (args.size() == 4 && args[3] == "!redirected" && dequeue_data_size_ == 0) {
+  //  out_rate_ = false;
+  //  dequeue_start_data_size_ = std::stoul(args[2]);
+  //  dequeue_time_count_ = std::stoul(args[1]);
+  //  dequeue_start_time_ = time_utils::now_us();
+  //  dequeue_data_size_ += prev_data_size_;
+  //}
+  //LOG(log_level::info) << "Here 1";
+  auto ret = partition_.delete_at(head_);
+  //LOG(log_level::info) << "Here 2";
   if (ret.first) {
-    head_ += (string_array::METADATA_LEN + ret.second.size());
+    head_ += (string_array::METADATA_LEN + ret.second);
     update_read_head();
-    dequeue_data_size_ += ret.second.size();
+  //  dequeue_data_size_ += ret.second;
+    //LOG(log_level::info) << "Here 3";
     RETURN_OK();
   }
-  if (ret.second == "!not_available" && !persistent_ && persistent_partition_.empty()) {
+  if (ret.second == -1 && !persistent_ && persistent_partition_.empty()) {
     RETURN_ERR("!msg_not_found");
   }
   if(persistent_ && !persistent_partition_.empty()) {
     //LOG(log_level::info) << "Dequeue from persistent";
     std::vector<std::string> persistent_args;
+    //LOG(log_level::info) << "Here 4";
     dequeue_ls(_return, persistent_args);
     return;
   }
@@ -129,6 +138,7 @@ void fifo_queue_partition::dequeue(response &_return, const arg_list &args) {
                std::to_string(dequeue_start_data_size_));
   }
   if (!next_target_str_.empty()) {
+    //LOG(log_level::info) << "Here 5";
     dequeue_redirected_ = true;
     RETURN_ERR("!redirected_dequeue",
                next_target_str_,
@@ -336,6 +346,7 @@ void fifo_queue_partition::run_command(response &_return, const arg_list &args) 
   if (is_mutator(cmd_name)) {
     dirty_ = true;
   }
+  //LOG(log_level::info) << "Hey " << overload();
   if (auto_scale_ && is_mutator(cmd_name) && overload() && is_tail() && !scaling_up_ && !scaling_down_ && next_target_str_.empty()) {
     LOG(log_level::info) << "Overloaded partition: " << name() << " storage = " << storage_size() << " capacity = "
                          << storage_capacity() << " partition size = " << size() << "partition capacity "
@@ -427,7 +438,7 @@ void fifo_queue_partition::forward_all() {
 }
 
 bool fifo_queue_partition::overload() {
-  return partition_.full();
+  return (double)partition_.size() > (double)partition_.capacity() * threshold_;
 }
 
 bool fifo_queue_partition::underload() {

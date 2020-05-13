@@ -40,7 +40,7 @@ class fifo_queue_client : data_structure_client {
    * @param item New item
    */
   void enqueue(const std::string &item);
-
+  void pipeline_enqueue(const std::vector<std::string> &items);
   /**
    * @brief Dequeue item
    */
@@ -108,7 +108,7 @@ class fifo_queue_client : data_structure_client {
    * @param _return Response
    * @param args Arguments
    */
-  void add_blocks(const std::vector<std::string> &_return, const std::vector<std::string> &args);
+  bool add_blocks(const std::vector<std::string> &_return, const std::vector<std::string> &args);
 
   /* Dequeue partition id */
   std::size_t dequeue_partition_;
