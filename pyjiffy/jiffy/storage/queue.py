@@ -57,6 +57,8 @@ class Queue(DataStructureClient):
         if self.read_partition < self.start:
             self.read_partition = self.start
 
+    def size(self):
+        return self.enqueue_partition - self.dequeue_partition + 1
 
     def _handle_redirect(self, args, response, flag=True):
         cmd = args[0]
