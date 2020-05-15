@@ -56,12 +56,15 @@ class replica_chain_client {
    */
   void send_command(const std::vector<std::string> &args);
 
+  void pipeline_send_command(const std::vector<std::string> &args);
+
   /**
    * @brief Receive response of command
    * Check whether response equals client sequence number
    * @return Response
    */
   std::vector<std::string> recv_response();
+  std::vector<std::string> pipeline_recv_response();
 
   /**
    * @brief Run command, first send command to the correct block(head or tail)

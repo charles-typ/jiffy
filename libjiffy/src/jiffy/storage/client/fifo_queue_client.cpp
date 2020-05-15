@@ -59,6 +59,24 @@ void fifo_queue_client::enqueue(const std::string &item) {
   run_repeated(_return, args);
 }
 
+void fifo_queue_client::pipeline_enqueue(const std::vector<std::string> &items) {
+  std::vector<std::vector<std::string>> args_vector;
+  for(std::string item : items) {
+    LOG(log_level::info) << "Enqueue send";
+    std::vector<std::string> args{"enqueue", item};
+    args_vector.push_back(args);
+    blocks_[block_id(args)]->pipeline_send_command(args);
+  }
+  std::vector<std::vector<std::string>> ret;
+  for(std::size_t i = 0; i < items.size();i++) {
+    LOG(log_level::info) << "Enqueue receive";
+    ret.push_back(blocks_[block_id(args_vector[i])]->pipeline_recv_response());
+  }
+  for(std::size_t i = 0; i < items.size();i++) {
+    handle_redirect(ret[i], args_vector[i]);
+  }
+}
+
 void fifo_queue_client::dequeue() {
   std::vector<std::string> _return;
   std::vector<std::string> args{"dequeue"};
@@ -110,14 +128,16 @@ void fifo_queue_client::handle_redirect(std::vector<std::string> &_return, const
   if (string_utils::split(_return[0], '_')[0] == "!redirected") {
     auto redirected_type = _return[0];
     do {
-      add_blocks(_return, args);
-      handle_partition_id(args);
+      if(add_blocks(_return, args) || args[0] == "dequeue") {
+        handle_partition_id(args);
+      }
       do {
         auto args_copy = args;
         if (args[0] == "enqueue")
           args_copy.insert(args_copy.end(), _return.end() - 3, _return.end());
         else if (args[0] == "dequeue")
           args_copy.insert(args_copy.end(), _return.end() - 2, _return.end());
+        LOG(log_level::info) << "Redirected " << blocks_.size() << " " << block_id(args_copy) << " " << args[0];
         _return = blocks_[block_id(args_copy)]->run_command_redirected(args_copy);
       } while (_return[0] == "!redo");
     } while (_return[0] == redirected_type);
@@ -155,7 +175,7 @@ void fifo_queue_client::handle_partition_id(const std::vector<std::string> &args
     enqueue_partition_++;
   } else if (cmd == fifo_queue_cmd_id::fq_dequeue
       || (cmd == fifo_queue_cmd_id::fq_length && std::stoi(args[1]) == fifo_queue_size_type::tail_size)
-      || (cmd == fifo_queue_cmd_id::fq_out_rate) || cmd == fifo_queue_cmd_id::fq_front) {
+      || (cmd == fifo_queue_cmd_id::fq_out_rate)) {
     dequeue_partition_++;
     if (dequeue_partition_ > enqueue_partition_) {
       enqueue_partition_ = dequeue_partition_;
@@ -177,6 +197,7 @@ void fifo_queue_client::run_repeated(std::vector<std::string> &_return, const st
   bool redo;
   do {
     try {
+    //    LOG(log_level::info) << blocks_.size() << " " << block_id(args) << " " << args[0];
       _return = blocks_[block_id(args)]->run_command(args);
       handle_redirect(_return, args);
       redo = false;
@@ -187,15 +208,19 @@ void fifo_queue_client::run_repeated(std::vector<std::string> &_return, const st
   THROW_IF_NOT_OK(_return);
 }
 
-void fifo_queue_client::add_blocks(const std::vector<std::string> &_return, const std::vector<std::string> &args) {
+
+bool fifo_queue_client::add_blocks(const std::vector<std::string> &_return, const std::vector<std::string> &args) {
+  bool ret = false;
   if (block_id(args) >= blocks_.size() - 1) {
     if (auto_scaling_) {
       auto chain = string_utils::split(_return[1], '!');
       blocks_.push_back(std::make_shared<replica_chain_client>(fs_, path_, chain, FQ_CMDS));
+      ret = true;
     } else {
       throw std::logic_error("Insufficient blocks");
     }
   }
+  return ret;
 }
 
 }
