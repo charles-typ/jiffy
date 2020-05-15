@@ -36,6 +36,7 @@ void string_array_persistent::put(const std::string &item) {
   // Write data
   local_.write(item.c_str(), len);
   tail_ += len;
+  local_.flush();
   //LOG(log_level::info) << "Writing to this position " << local_.tellp();
 }
 
