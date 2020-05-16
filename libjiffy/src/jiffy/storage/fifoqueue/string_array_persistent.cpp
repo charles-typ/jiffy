@@ -1,5 +1,6 @@
 #include "string_array_persistent.h"
 #include "jiffy/utils/logger.h"
+#include "jiffy/utils/time_utils.h"
 
 namespace jiffy {
 namespace storage {
@@ -27,15 +28,25 @@ bool string_array_persistent::operator==(const string_array_persistent &other) c
 }
 
 void string_array_persistent::put(const std::string &item) {
+  auto start_time = time_utils::now_us();
   std::size_t len = item.size();
   // Write length
   local_.seekp(tail_, std::ios::beg);
+  auto end_time1 = time_utils::now_us();
   local_.write(reinterpret_cast<char*>(&len), METADATA_LEN);
+  auto end_time2 = time_utils::now_us();
   last_element_offset_ = tail_;
   tail_ += METADATA_LEN;
   // Write data
   local_.write(item.c_str(), len);
+//  local_.flush();
+  std::flush(local_);
+  auto end_time3 = time_utils::now_us();
   tail_ += len;
+  LOG(log_level::info) << "Persistent: " << end_time1 - start_time;
+  LOG(log_level::info) << "Persistent: " << end_time2 - end_time1;
+  LOG(log_level::info) << "Persistent: " << end_time3 - end_time2;
+  LOG(log_level::info) << "Hey";
   //LOG(log_level::info) << "Writing to this position " << local_.tellp();
 }
 

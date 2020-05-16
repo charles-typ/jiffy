@@ -73,7 +73,7 @@ class ReplicaChainClient:
     def pipeline_send_command(self, args):
          self.tail.send_request(self.seq, args)
 
-      def pipeline_recv_response(self):
+    def pipeline_recv_response(self):
          rseq, result = self.response_reader.recv_response()
          self.seq.client_seq_no += 1
          return result

@@ -114,7 +114,7 @@ class Queue(DataStructureClient):
     def get(self):
         self._run_repeated([QueueOps.dequeue])
 
-	def pipeline_put(self, items):
+    def pipeline_put(self, items):
         for item in items:
             self.blocks[self._block_id([QueueOps.enqueue, item])].pipeline_send_command([QueueOps.enqueue, item])
         ret = []
