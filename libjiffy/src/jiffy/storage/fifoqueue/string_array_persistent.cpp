@@ -1,6 +1,8 @@
 #include "string_array_persistent.h"
 #include "jiffy/utils/logger.h"
 #include "jiffy/utils/time_utils.h"
+#include <chrono>
+#include <thread>
 
 namespace jiffy {
 namespace storage {
@@ -28,6 +30,7 @@ bool string_array_persistent::operator==(const string_array_persistent &other) c
 }
 
 void string_array_persistent::put(const std::string &item) {
+  std::this_thread::sleep_for(std::chrono::microseconds(50));
   auto start_time = time_utils::now_us();
   std::size_t len = item.size();
   // Write length
