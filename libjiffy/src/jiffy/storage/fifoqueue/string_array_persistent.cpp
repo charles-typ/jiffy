@@ -61,6 +61,7 @@ std::pair<bool, std::string> string_array_persistent::get() {
   local_.read(&test[0], len);
   head_ += len + METADATA_LEN;
   std::string ret(test);
+  LOG(log_level::info) << "Reading from persistent " << len << " " << time_utils::now_us();
   return std::make_pair(true, std::string(test, len));
 }
 
