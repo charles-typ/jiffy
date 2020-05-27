@@ -53,6 +53,7 @@ std::pair<bool, std::string> string_array::push_back(const std::string &item) {
     // Write data
     std::memcpy(data_ + tail_, item.c_str(), len);
     tail_ += len;
+	LOG(log_level::info) << "Writing to this memory " << item.size() << " " << time_utils::now_us();
     return std::make_pair(true, std::string("!success"));
   } else { // Item will not be written, full item will be returned
     split_string_ = true;

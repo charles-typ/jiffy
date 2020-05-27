@@ -41,6 +41,7 @@ void string_array_persistent::put(const std::string &item) {
 //  local_.flush();
   std::flush(local_);
   tail_ += len;
+  LOG(log_level::info) << "Writing to persistent " << item.size() << " " << time_utils::now_us();
   //LOG(log_level::info) << "Writing to this position " << local_.tellp();
 }
 
