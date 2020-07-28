@@ -21,7 +21,7 @@ class QueueOps:
     out_rate = b('out_rate')
 
     op_types = {enqueue: CommandType.mutator,
-                dequeue: CommandType.mutator,
+                dequeue: CommandType.accessor,
                 read_next: CommandType.accessor,
                 length: CommandType.accessor,
                 in_rate: CommandType.accessor,
