@@ -7,7 +7,51 @@
 namespace jiffy {
 namespace directory {
 
-std::vector<std::string> random_block_allocator::allocate(std::size_t count, const std::vector<std::string> &) {
+std::vector<std::string> random_block_allocator::dumb_allocate(std::size_t count, const std::vector<std::string> &) {
+  std::unique_lock<std::mutex> lock(mtx_);
+  std::vector<std::string> block_names;
+  if (count > free_blocks_.size()) {
+//    for(int i = 0; i < count - free_blocks_.size();i++) {
+//      block_names.push_back(std::string("127.0.0.1:") + std::to_string(i) + std::to_string(utils::rand_utils::rand_int64(99999999)));
+//    }
+//  free_blocks_.insert(block_names.begin(), block_names.end());
+    //throw std::out_of_range(
+    //    "Insufficient free blocks to allocate from (requested: " + std::to_string(count) + ", have: "
+    //        + std::to_string(free_blocks_.size()));
+  }
+  std::vector<std::string> blocks;
+  std::set<std::string> prefixes;
+
+  // Find blocks with different prefixes
+  size_t blocks_considered = 0;
+  auto idx = static_cast<int64_t>(free_blocks_.size() - 1);
+  auto it = std::next(free_blocks_.begin(), utils::rand_utils::rand_int64(idx));
+  while (blocks_considered < free_blocks_.size() && blocks.size() < count) {
+    auto block_prefix = prefix(*it);
+    if (prefixes.find(block_prefix) == prefixes.end()) {
+      blocks.push_back(*it);
+      prefixes.insert(block_prefix);
+    }
+    if (++it == free_blocks_.end()) {
+      it = free_blocks_.begin();
+    }
+    ++blocks_considered;
+  }
+
+  if (blocks.size() != count) {
+    throw std::out_of_range("Could not find free blocks with distinct prefixes");
+  }
+
+  for (const auto &block: blocks) {
+    free_blocks_.erase(block);
+    allocated_blocks_.insert(block);
+  }
+
+  return blocks;
+}
+
+std::vector<std::string> random_block_allocator::allocate(std::size_t count, const std::vector<std::string> &exclude_list) {
+  return dumb_allocate(count, exclude_list);
   std::unique_lock<std::mutex> lock(mtx_);
   if (count > free_blocks_.size()) {
     throw std::out_of_range(
@@ -70,6 +114,7 @@ void random_block_allocator::add_blocks(const std::vector<std::string> &block_na
   std::unique_lock<std::mutex> lock(mtx_);
   free_blocks_.insert(block_names.begin(), block_names.end());
 }
+
 
 void random_block_allocator::remove_blocks(const std::vector<std::string> &block_names) {
   std::unique_lock<std::mutex> lock(mtx_);

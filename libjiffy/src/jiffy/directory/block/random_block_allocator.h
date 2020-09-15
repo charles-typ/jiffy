@@ -14,7 +14,14 @@ namespace directory {
 /* Random block allocator class, inherited from block allocator */
 class random_block_allocator : public block_allocator {
  public:
-  random_block_allocator() = default;
+     random_block_allocator() {
+         std::vector<std::string> block_names;
+    for(int i = 0; i < 110000;i++) {
+      block_names.push_back(std::string("127.0.0.1:") + std::to_string(i) + std::to_string(utils::rand_utils::rand_int64(99999999)));
+    }
+  free_blocks_.insert(block_names.begin(), block_names.end());
+
+     }
 
   virtual ~random_block_allocator() = default;
 
@@ -25,6 +32,8 @@ class random_block_allocator : public block_allocator {
    */
 
   std::vector<std::string> allocate(std::size_t count, const std::vector<std::string> &exclude_list) override;
+
+  std::vector<std::string> dumb_allocate(std::size_t count, const std::vector<std::string> &exclude_list);
 
   /**
    * @brief Free blocks
