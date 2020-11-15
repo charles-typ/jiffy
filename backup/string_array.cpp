@@ -1,6 +1,5 @@
 #include "string_array.h"
 #include "jiffy/utils/logger.h"
-#include "jiffy/utils/time_utils.h"
 
 namespace jiffy {
 namespace storage {
@@ -53,7 +52,6 @@ std::pair<bool, std::string> string_array::push_back(const std::string &item) {
     // Write data
     std::memcpy(data_ + tail_, item.c_str(), len);
     tail_ += len;
-    LOG(log_level::info) << "Writing to this memory " << item.size() << " " << time_utils::now_us();
     return std::make_pair(true, std::string("!success"));
   } else { // Item will not be written, full item will be returned
     split_string_ = true;
@@ -68,19 +66,8 @@ const std::pair<bool, std::string> string_array::at(std::size_t offset) const {
     return std::make_pair(false, std::string("!not_available"));
   }
   auto len = *((std::size_t *) (data_ + offset));
-  LOG(log_level::info) << "Reading from memory " << len << " " << time_utils::now_us();
   return std::make_pair(true, std::string(data_ + offset + METADATA_LEN, len));
 }
-
-const std::pair<bool, int> string_array::delete_at(std::size_t offset) const {
-   if (offset > last_element_offset_ || empty()) {
-     if (split_string_)
-       return std::make_pair(false, 0);
-     return std::make_pair(false, -1);
-   }
-   auto len = *((std::size_t *) (data_ + offset));
-   return std::make_pair(true, len);
- }
 
 std::size_t string_array::find_next(std::size_t offset) const {
   if (offset >= last_element_offset_ || offset >= tail_) return 0;

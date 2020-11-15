@@ -15,21 +15,15 @@ class FifoQueueSizeType(IntEnum):
 class QueueOps:
     enqueue = b('enqueue')
     dequeue = b('dequeue')
-    enqueue_ls = b('enqueue_ls')
-    dequeue_ls = b('dequeue_ls')
     read_next = b('read_next')
     length = b('length')
-    length_ls = b('length')
     in_rate = b('in_rate')
     out_rate = b('out_rate')
 
     op_types = {enqueue: CommandType.mutator,
-                dequeue: CommandType.mutator,
-                enqueue_ls: CommandType.mutator,
-                dequeue_ls: CommandType.accessor,
+                dequeue: CommandType.accessor,
                 read_next: CommandType.accessor,
                 length: CommandType.accessor,
-                length_ls: CommandType.accessor,
                 in_rate: CommandType.accessor,
                 out_rate: CommandType.accessor}
 
@@ -43,7 +37,6 @@ class Queue(DataStructureClient):
         self.dequeue_partition = 0
         self.read_partition = 0
         self.start = 0
-        self.path_ = self.block_info.backing_path.split(":/")[-1] + "/"
         if self.block_info.tags.get("fifoqueue.auto_scale") is None:
             self.auto_scale = True
         else:
@@ -57,10 +50,8 @@ class Queue(DataStructureClient):
         if self.read_partition < self.start:
             self.read_partition = self.start
 
-    def size(self):
-        return self.enqueue_partition - self.dequeue_partition + 1
 
-    def _handle_redirect(self, args, response, flag=True):
+    def _handle_redirect(self, args, response):
         cmd = args[0]
         if response[0] == b('!ok'):
             return response
@@ -69,8 +60,8 @@ class Queue(DataStructureClient):
         if response[0][:11] == b('!redirected'):
             redirected_response = response[0]
             while response[0] == redirected_response:
-                if self.add_blocks(response, args, flag) or args[0] == QueueOps.dequeue:
-                    self.handle_partition_id(args)
+                self.add_blocks(response, args)
+                self.handle_partition_id(args)
                 while True:
                     args_copy = copy.deepcopy(args)
                     if args[0] == QueueOps.enqueue:
@@ -90,10 +81,6 @@ class Queue(DataStructureClient):
             return self.enqueue_partition
         elif args[0] == QueueOps.dequeue:
             return self.dequeue_partition
-        elif args[0] == QueueOps.enqueue_ls:
-            return self.enqueue_partition
-        elif args[0] == QueueOps.dequeue_ls:
-            return self.dequeue_partition
         elif args[0] == QueueOps.read_next:
             return self.read_partition - self.start
         elif args[0] == QueueOps.length:
@@ -112,29 +99,7 @@ class Queue(DataStructureClient):
         self._run_repeated([QueueOps.enqueue, item])
 
     def get(self):
-        self._run_repeated([QueueOps.dequeue])
-
-    def pipeline_put(self, items):
-        for item in items:
-            self.blocks[self._block_id([QueueOps.enqueue, item])].pipeline_send_command([QueueOps.enqueue, item])
-        ret = []
-        for i in range(len(items)):
-            ret.append(self.blocks[self._block_id([QueueOps.enqueue, items[i]])].pipeline_recv_response())
-        flag = True
-        for i in range(len(items)):
-            self._handle_redirect([QueueOps.enqueue, items[i]], ret[i], flag)
-            if ret[i][0][:11] == b('!redirected'):
-                flag = False
-
-
-
-
-
-    def put_ls(self, item):
-        self._run_repeated([QueueOps.enqueue_ls, item, self.path_])
-
-    def get_ls(self):
-        return self._run_repeated([QueueOps.dequeue_ls, self.path_])[1]
+        return self._run_repeated([QueueOps.dequeue])[1]
 
     def read_next(self):
         return self._run_repeated([QueueOps.read_next])[1]
@@ -167,18 +132,15 @@ class Queue(DataStructureClient):
         else:
             raise ValueError
 
-    def add_blocks(self, response, args, flag):
-        ret = False
-        if self._block_id(args) >= len(self.blocks) - 1 and flag:
+    def add_blocks(self, response, args):
+        if self._block_id(args) >= len(self.block_info.data_blocks) - 1:
             if self.auto_scale:
                 block_ids = [bytes_to_str(j) for j in response[1].split(b('!'))]
                 chain = ReplicaChain(block_ids, 0, 0, rpc_storage_mode.rpc_in_memory)
                 self.blocks.append(
                     ReplicaChainClient(self.fs, self.path, self.client_cache, chain, QueueOps.op_types))
-                ret = True
             else:
                 raise ValueError
-        return ret
 
 
     class ReadIterator(object):

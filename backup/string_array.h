@@ -86,7 +86,6 @@ class string_array {
    * @param Pair, a status boolean and the read string
    */
   const std::pair<bool, std::string> at(std::size_t offset) const;
-  const std::pair<bool, int> delete_at(std::size_t offset) const;
 
   /**
    * @brief Find next string for the given offset string

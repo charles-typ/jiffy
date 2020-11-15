@@ -21,7 +21,7 @@ int main() {
   int lease_port = 9091;
   int num_blocks = 1;
   int chain_length = 1;
-  size_t num_ops = 419430;
+  size_t num_ops = 4000;
   size_t data_size = 102400;
   std::string op_type = "fifo_queue_auto_scaling";
   std::string path = "/tmp";
@@ -71,6 +71,7 @@ int main() {
   std::ofstream out("latency.trace");
   uint64_t enqueue_tot_time = 0, enqueue_t0 = 0, enqueue_t1 = 0;
   for (j = 0; j < num_ops; ++j) {
+    LOG(log_level::info) << "Running enqueue: " << j;
     enqueue_t0 = time_utils::now_us();
     fq_client->enqueue(data_);
     enqueue_t1 = time_utils::now_us();
@@ -81,13 +82,22 @@ int main() {
   }
   uint64_t dequeue_tot_time = 0, dequeue_t0 = 0, dequeue_t1 = 0;
   for (j = num_ops; j > 0; --j) {
+    LOG(log_level::info) << "Running dequeue: " << j;
     dequeue_t0 = time_utils::now_us();
-    fq_client->front();
     fq_client->dequeue();
     dequeue_t1 = time_utils::now_us();
     dequeue_tot_time = (dequeue_t1 - dequeue_t0);
     auto cur_epoch = ts::duration_cast<ts::milliseconds>(ts::system_clock::now().time_since_epoch()).count();
     out << cur_epoch << " " << dequeue_tot_time << " dequeue" << std::endl;
+  }
+
+  for (j = 0; j < num_ops; ++j) {
+    LOG(log_level::info) << "Running enqueue: " << j;
+    fq_client->enqueue(data_);
+  }
+  for (j = num_ops; j > 0; --j) {
+    LOG(log_level::info) << "Running dequeue: " << j;
+    fq_client->dequeue();
   }
   stop_.store(true);
   if (worker_.joinable())

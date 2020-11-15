@@ -215,11 +215,21 @@ void auto_scaling_service_handler::auto_scaling(const std::vector<std::string> &
     // Add a replica chain at directory server
     auto start = time_utils::now_us();
     auto dst_name = conf.find("next_partition_name")->second;
-    auto dst_replica_chain = fs->add_block(path, dst_name, "regular");
+    directory::replica_chain dst_replica_chain;
+    LOG(log_level::info) << "Requesting for an add block";
+    auto src = std::make_shared<replica_chain_client>(fs, path, cur_chain, FQ_CMDS);
+    try {
+      dst_replica_chain = fs->add_block(path, dst_name, "regular");
+    } catch (std::exception &e) {
+      LOG(log_level::info) << "Insufficient blocks in the memory";
+      src->run_command({"update_partition", "error"});
+      return;
+    }
+
+    LOG(log_level::info) << "Successfully add block";
     auto finish_adding_replica_chain = time_utils::now_us();
 
     // Update source partition
-    auto src = std::make_shared<replica_chain_client>(fs, path, cur_chain, FQ_CMDS);
     src->run_command({"update_partition", pack(dst_replica_chain)});
     auto finish_updating_partition = time_utils::now_us();
 
