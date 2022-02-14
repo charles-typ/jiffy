@@ -43,22 +43,17 @@ bool string_array::operator==(const string_array &other) const {
 }
 
 std::pair<bool, std::string> string_array::push_back(const std::string &item) {
-  auto start_time = time_utils::now_us();
   auto len = item.size();
   if (len + tail_ + METADATA_LEN <= max_ && !split_string_) { // Complete item will be written
     // Write length
     std::memcpy(data_ + tail_, (char *) &len, METADATA_LEN);
-    auto end_time_1 = time_utils::now_us();
     last_element_offset_ = tail_;
     tail_ += METADATA_LEN;
 
     // Write data
     std::memcpy(data_ + tail_, item.c_str(), len);
     tail_ += len;
-    auto end_time_2 = time_utils::now_us();
-	LOG(log_level::info) << "Memory: " << end_time_1 - start_time;
-	LOG(log_level::info) << "Memory: " << end_time_2 - end_time_1;
-	LOG(log_level::info) << "Hey";
+    LOG(log_level::info) << "Writing to this memory " << item.size() << " " << time_utils::now_us();
     return std::make_pair(true, std::string("!success"));
   } else { // Item will not be written, full item will be returned
     split_string_ = true;
@@ -73,6 +68,7 @@ const std::pair<bool, std::string> string_array::at(std::size_t offset) const {
     return std::make_pair(false, std::string("!not_available"));
   }
   auto len = *((std::size_t *) (data_ + offset));
+  LOG(log_level::info) << "Reading from memory " << len << " " << time_utils::now_us();
   return std::make_pair(true, std::string(data_ + offset + METADATA_LEN, len));
 }
 

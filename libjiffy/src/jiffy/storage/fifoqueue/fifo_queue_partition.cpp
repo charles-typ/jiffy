@@ -18,7 +18,7 @@ fifo_queue_partition::fifo_queue_partition(block_memory_manager *manager,
                                            int auto_scaling_port)
     : chain_module(manager, name, metadata, FQ_CMDS),
       partition_(manager->mb_capacity(), build_allocator<char>()),
-      backing_path_(name + "tmp" + std::to_string(rand_utils::rand_int64(0,999999))),
+      backing_path_("/data/" + name + "tmp" + std::to_string(rand_utils::rand_int64(0,999999))),
       persistent_partition_(backing_path_),
       scaling_up_(false),
       scaling_down_(false),

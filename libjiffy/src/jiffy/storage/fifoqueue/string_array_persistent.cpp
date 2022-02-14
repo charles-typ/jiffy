@@ -42,6 +42,7 @@ void string_array_persistent::put(const std::string &item) {
 //  local_.flush();
   std::flush(local_);
   tail_ += len;
+  LOG(log_level::info) << "Writing to persistent " << item.size() << " " << time_utils::now_us();
   //LOG(log_level::info) << "Writing to this position " << local_.tellp();
 }
 
@@ -61,6 +62,7 @@ std::pair<bool, std::string> string_array_persistent::get() {
   local_.read(&test[0], len);
   head_ += len + METADATA_LEN;
   std::string ret(test);
+  LOG(log_level::info) << "Reading from persistent " << len << " " << time_utils::now_us();
   return std::make_pair(true, std::string(test, len));
 }
 
