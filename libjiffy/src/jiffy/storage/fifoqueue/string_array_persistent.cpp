@@ -30,7 +30,7 @@ bool string_array_persistent::operator==(const string_array_persistent &other) c
 }
 
 void string_array_persistent::put(const std::string &item) {
-  std::this_thread::sleep_for(std::chrono::microseconds(50));
+  std::this_thread::sleep_for(std::chrono::microseconds(10));
   std::size_t len = item.size();
   // Write length
   local_.seekp(tail_, std::ios::beg);
