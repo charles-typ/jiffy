@@ -194,10 +194,10 @@ bool ds_file_node::handle_lease_expiry(std::vector<std::string> &cleared_blocks,
           if (i == dstatus_.chain_length() - 1) {
             std::string block_backing_path = dstatus_.backing_path();
             utils::directory_utils::push_path_element(block_backing_path, block.name);
-            storage->dump(block.tail(), block_backing_path);
+            //storage->dump(block.tail(), block_backing_path);
             dstatus_.mode(i, storage_mode::on_disk);
           } else {
-            storage->destroy_partition(block.block_ids[i]);
+            //storage->destroy_partition(block.block_ids[i]);
           }
           cleared_blocks.push_back(block.block_ids[i]);
         }
@@ -206,7 +206,7 @@ bool ds_file_node::handle_lease_expiry(std::vector<std::string> &cleared_blocks,
     } else {
       for (const auto &block: dstatus_.data_blocks()) {
         for (const auto &block_name: block.block_ids) {
-          storage->destroy_partition(block_name);
+          //storage->destroy_partition(block_name);
           cleared_blocks.push_back(block_name);
         }
       }
@@ -235,16 +235,16 @@ replica_chain ds_file_node::add_data_block(const std::string &path,
   dstatus_.add_data_block(chain);
   using namespace storage;
   if (dstatus_.chain_length() == 1) {
-    storage->create_partition(chain.block_ids[0], dstatus_.type(), chain.name, chain.metadata, dstatus_.get_tags());
-    storage->setup_chain(chain.block_ids[0], path, chain.block_ids, chain_role::singleton, "nil");
+    //storage->create_partition(chain.block_ids[0], dstatus_.type(), chain.name, chain.metadata, dstatus_.get_tags());
+    //storage->setup_chain(chain.block_ids[0], path, chain.block_ids, chain_role::singleton, "nil");
   } else {
     for (size_t j = 0; j < dstatus_.chain_length(); ++j) {
       std::string block_id = chain.block_ids[j];
       std::string next_block_id = (j == dstatus_.chain_length() - 1) ? "nil" : chain.block_ids[j + 1];
       int32_t
           role = (j == 0) ? chain_role::head : (j == dstatus_.chain_length() - 1) ? chain_role::tail : chain_role::mid;
-      storage->create_partition(block_id, dstatus_.type(), chain.name, chain.metadata, dstatus_.get_tags());
-      storage->setup_chain(block_id, path, chain.block_ids, role, next_block_id);
+      //storage->create_partition(block_id, dstatus_.type(), chain.name, chain.metadata, dstatus_.get_tags());
+      //storage->setup_chain(block_id, path, chain.block_ids, role, next_block_id);
     }
   }
   return chain;
@@ -259,7 +259,7 @@ void ds_file_node::remove_block(const std::string &partition_name,
     throw directory_ops_exception("No partition with name " + partition_name);
   }
   for (const auto &id: block.block_ids) {
-    storage->destroy_partition(id);
+    //storage->destroy_partition(id);
   }
   allocator->free(block.block_ids);
 }
