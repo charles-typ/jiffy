@@ -178,8 +178,8 @@ class renew_leases_benchmark : public directory_benchmark {
 
 };
 
-int main() {
-  std::string address = "127.0.0.1";
+int main(int argc, char** argv) {
+  std::string address = argv[1];
   int service_port = 9090;
   int lease_port = 9091;
   int num_ops = 100000;
