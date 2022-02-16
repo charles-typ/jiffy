@@ -15,8 +15,8 @@ using namespace ::jiffy::storage;
 using namespace ::jiffy::utils;
 using namespace ::apache::thrift;
 namespace ts = std::chrono;
-int main() {
-  std::string address = "127.0.0.1";
+int main(int argc, char** argv) {
+  std::string address = argv[1];
   int service_port = 9090;
   int lease_port = 9091;
   int num_blocks = 1;

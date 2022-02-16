@@ -49,10 +49,10 @@ std::vector<std::string> keygenerator(std::size_t num_keys, double theta = 0, in
   return keys;
 }
 
-int main() {
+int main(int argc, char** argv) {
+  std::string address = argv[1];
   size_t num_ops = 419430;
   std::vector<std::string> keys = keygenerator(num_ops);
-  std::string address = "127.0.0.1";
   int service_port = 9090;
   int lease_port = 9091;
   int num_blocks = 1;
