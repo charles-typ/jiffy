@@ -59,7 +59,7 @@ void auto_scaling_service_handler::auto_scaling(const std::vector<std::string> &
     LOG(log_level::info) << "\t Start " << start;
     LOG(log_level::info) << "\t Add_replica_chain: " << finish_adding_replica_chain;
     LOG(log_level::info) << "\t Update_partition: " << finish_updating_partition;
-    LOG(log_level::info) << " " << start << " " << finish_updating_partition - start << " "
+    LOG(log_level::info) << " E " << start << " " << finish_updating_partition - start << " "
                          << finish_adding_replica_chain - start << " "
                          << finish_updating_partition - finish_adding_replica_chain;
 
