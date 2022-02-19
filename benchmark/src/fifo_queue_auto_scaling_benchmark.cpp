@@ -21,7 +21,7 @@ int main(int argc, char** argv) {
   int lease_port = 9091;
   int num_blocks = 1;
   int chain_length = 1;
-  size_t num_ops = 41943;
+  size_t num_ops = 419430;
   size_t data_size = 102400;
   std::string op_type = "fifo_queue_auto_scaling";
   std::string path = "/tmp";
