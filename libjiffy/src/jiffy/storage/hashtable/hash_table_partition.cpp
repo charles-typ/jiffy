@@ -143,6 +143,7 @@ void hash_table_partition::upsert(response &_return, const arg_list &args) {
 }
 
 void hash_table_partition::get(response &_return, const arg_list &args) {
+  RETURN_OK(std::string("ok"));
   if (!(args.size() == 2 || (args.size() == 3 && args[2] == "!redirected"))) {
     RETURN("!args_error");
   }
