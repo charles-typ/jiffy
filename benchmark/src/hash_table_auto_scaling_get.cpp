@@ -52,7 +52,7 @@ std::vector<std::string> keygenerator(std::size_t num_keys, double theta = 0, in
 
 int main(int argc, char** argv) {
   std::string address = argv[1];
-  size_t num_ops = 41943;
+  size_t num_ops = 419430;
   std::vector<std::string> keys = keygenerator(num_ops);
   int service_port = 9090;
   int lease_port = 9091;
